@@ -38,7 +38,7 @@ class OledDisplay:
         # Load default font.
         font = ImageFont.load_default()
         # Draw it into a box.
-        bbox = font.getbbox(text)
+        bbox = font.getbbox(str(text))
         (font_width, font_height) = bbox[2] - bbox[0], bbox[3] - bbox[1]
         draw.text(
             (self.oled.width // 2 - font_width // 2, self.oled.height // 2 - font_height // 2),
