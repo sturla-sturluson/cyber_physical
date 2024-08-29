@@ -8,6 +8,3 @@ User=sturla22
 WorkingDirectory=/home/sturla22
 ExecStart=/home/sturla22/cpsy/bin/python3 display-ip.py
 Restart=never
-
-[Install]
-WantedBy=multi-user.target
