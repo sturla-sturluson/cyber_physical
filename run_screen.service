@@ -1,0 +1,10 @@
+[Unit]
+Description=run_screen
+After=network-online.target
+
+[Service]
+Type=simple
+User=sturla22
+WorkingDirectory=/home/sturla22
+ExecStart=/home/sturla22/cpsy/bin/python3 /run_screen/run_screen.py
+Restart=never

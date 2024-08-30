@@ -57,11 +57,14 @@ def main():
             count += 1
             time.sleep(4)
 
-
+    except KeyboardInterrupt:
+        oled_display.draw_text("Goodbye!")
+        time.sleep(4)
+        oled_display.clear()
     except Exception as e:
         print(e)
         oled_display.draw_text("Error")
-    
+
 
 
 
