@@ -42,7 +42,7 @@ def main():
     oled_display = OledDisplay()
     ip_address = get_local_ip()
     mpl_sensor = Mpl_Sensor()
-    oled_display.draw_text(ip_address)
+    oled_display.display_text(ip_address)
     display_order = [
         get_current_time_string,
         get_ip_string,
@@ -53,14 +53,14 @@ def main():
     try:
         while True:
             current_text = display_order[count % len(display_order)]()
-            oled_display.draw_text(current_text)
+            oled_display.display_text(current_text)
             count += 1
             time.sleep(4)
 
 
     except Exception as e:
         print(e)
-        oled_display.draw_text("Error")
+        oled_display.display_text("Error")
     
 
 
