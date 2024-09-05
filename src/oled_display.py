@@ -1,9 +1,13 @@
 import board
 import digitalio
-import adafruit_ssd1306
+from adafruit_ssd1306 import ssd1306
 from PIL import Image, ImageDraw, ImageFont
+from adafruit_framebuf import FrameBuffer as FB
 
 DEFAULT_BORDER = 2
+
+class _ISSD1306(ssd1306.SSD1306_I2C,FB):
+    ...
 
 class OledDisplay:
     # Change these
@@ -17,9 +21,10 @@ class OledDisplay:
         self.screen_dim = (self.WIDTH, self.HEIGHT)
         self.font = ImageFont.load_default()
 
-        self.oled_reset = digitalio.DigitalInOut(board.D4)
+        self.oled_reset = digitalio.DigitalInOut(board.D4) # Reset pin, used to initialize the OLED display
         self.i2c = board.I2C()  # uses board.SCL and board.SDA
-        self.oled = adafruit_ssd1306.SSD1306_I2C(self.WIDTH, self.HEIGHT, self.i2c, addr=0x3C, reset=self.oled_reset)
+        self.oled:_ISSD1306 = ssd1306.SSD1306_I2C(self.WIDTH, self.HEIGHT, self.i2c, addr=0x3C, reset=self.oled_reset)
+
 
 
 
