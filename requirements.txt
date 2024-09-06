@@ -15,6 +15,7 @@ Adafruit-GPIO==1.0.3
 Adafruit-PlatformDetect==3.73.0
 Adafruit-PureIO==1.1.11
 binho-host-adapter==0.1.6
+numpy==2.1.1
 pillow==10.4.0
 pyftdi==0.55.4
 pyserial==3.5

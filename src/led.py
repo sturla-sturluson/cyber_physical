@@ -10,7 +10,6 @@ class Led:
             print("Setting GPIO mode")
             GPIO.setmode(GPIO.BOARD)
         GPIO.setup(self.LED_PIN, GPIO.OUT)
-        GPIO.output(self.LED_PIN, GPIO.LOW)
 
         # Start with LED ON
         self.turn_on()

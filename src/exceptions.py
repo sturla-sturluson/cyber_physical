@@ -1,0 +1,5 @@
+
+
+
+class OledTerminatedError(Exception):
+    pass
