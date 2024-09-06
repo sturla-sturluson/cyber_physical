@@ -5,8 +5,6 @@ import busio
 import os
 from PIL import Image, ImageFont
 from PIL import ImageDraw as ImageDrawModule
-from .exceptions import OledTerminatedError
-import typing
 from PIL.ImageDraw import ImageDraw
 
 # Lock so only one process can write to the display at a time

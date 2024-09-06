@@ -95,11 +95,7 @@ class MagneticSensor:
         203°-247° -> SW
         248°-292° -> W
         293°-337° -> NW
-
-        
-        """ 
-
-        
+        """      
 
         if degrees >= 338 or degrees <= 22:
             return "N"

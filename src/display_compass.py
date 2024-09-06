@@ -1,13 +1,16 @@
-from src.oled_display import OledDisplay
-from src.magnetic_sensor import MagneticSensor
+from .display import OledDisplay
+from .sensors import MagneticSensor
+from .utils import get_current_time_string, get_ip_string, get_pressure_string, get_temperature_string, get_altitude_string
 import time
+import datetime as dt
 from os import system
 
 
-def main():
-    oled_display = OledDisplay()
+def run_display_compass(oled_display:OledDisplay):
     magnetic_sensor = MagneticSensor()
+
     try:
+        print("run_display_compass")
         while True:
             deg, x_max, x_min, y_max, y_min,x_avg,y_avg= magnetic_sensor.get_full_data().values()       
             system('clear')
@@ -23,7 +26,3 @@ def main():
         oled_display.clear()
     finally:
         oled_display.cleanup()
-
-
-if __name__ == '__main__':
-    main()

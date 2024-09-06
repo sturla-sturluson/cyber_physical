@@ -3,7 +3,7 @@ import board
 import adafruit_mpl3115a2 as mpl
 
 
-class Mpl_Sensor:
+class MplSensor:
     def __init__(self):
         self.i2c = board.I2C()
         self.sensor = mpl.MPL3115A2(self.i2c)
