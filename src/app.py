@@ -13,9 +13,9 @@ def app(
         slide_time:int = 4,
         compass:bool = False
         ):
+    
+
     oled_display = OledDisplay()
-
-
     try:
         if(slide):
             run_slide_show(oled_display,slide_time)

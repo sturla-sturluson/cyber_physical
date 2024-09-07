@@ -10,23 +10,23 @@ class Led:
             print("Setting GPIO mode")
             GPIO.setmode(GPIO.BOARD)
         GPIO.setup(self.LED_PIN, GPIO.OUT)
-
-        # Start with LED ON
-        self.turn_on()
+        self.turn_off()
 
     def toggle(self):
-        self.IS_ON = not self.IS_ON
         if self.IS_ON:
-            self.turn_on()
-        else:
             self.turn_off()
-        print(f"LED is {'ON' if self.IS_ON else 'OFF'}")
+        else:
+            self.turn_on()
 
     def turn_on(self):
-        GPIO.output(self.LED_PIN, GPIO.HIGH)
+        if(not self.IS_ON):
+            self.IS_ON = True
+            GPIO.output(self.LED_PIN, GPIO.HIGH)
 
     def turn_off(self):
-        GPIO.output(self.LED_PIN, GPIO.LOW)
+        if(self.IS_ON):
+            self.IS_ON = False
+            GPIO.output(self.LED_PIN, GPIO.LOW)
 
     def cleanup(self):
         GPIO.output(self.LED_PIN, GPIO.LOW)
