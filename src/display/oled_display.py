@@ -79,6 +79,7 @@ class OledDisplay:
             fill=255,
             align="center",
         )
+        
     def _draw_multiline_text(self, draw:ImageDraw, split_text:list[str]):
         """Draws the text on the OLED display"""
         if(len(split_text) > 4):
@@ -93,14 +94,19 @@ class OledDisplay:
             max_height = max(max_height,font_height)
 
         combined_text = combined_text.strip()    
+        display_width = (self.WIDTH - max_width) // 2
+        display_height = (self.HEIGHT - max_height * len(split_text)) // 2
+
+
         # get the line height
-        draw.multiline_text(
-            ((self.WIDTH - font_width) // 2,(self.HEIGHT - max_height ) // 2),
+        draw.text(
+            (display_width,self.border+2),
+            #(0,0),
             combined_text,
             font=self.font,
             fill=255,
-            #anchor="mm",
-            #align="center",
+           # anchor="mm",
+            align="center",
         )
 
     def _get_text_dimensions(self,text:str,max_width:int):

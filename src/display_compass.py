@@ -10,14 +10,13 @@ from os import system
 def run_display_compass(oled_display:OledDisplay):
     magnetic_sensor = MagneticSensor()
     led = Led(22)
-
+    input("Press enter to start the compass")
     try:
         print("run_display_compass")
         while True:
-            deg, x_max, x_min, y_max, y_min,x_avg,y_avg= magnetic_sensor.get_full_data().values()       
             system('clear')
-            print(f"Degrees: {deg}\nMAX | MIN | AVG\nX: {x_max:.2f} | {x_min:.2f} | {x_avg:.2f}\nY: {y_max:.2f} | {y_min:.2f} | {y_avg:.2f}")
-            nsew_string = magnetic_sensor.get_orientation_string(deg)
+            degrees = magnetic_sensor.get_orientation()
+            nsew_string = magnetic_sensor.get_NSEW_string(degrees)
             oled_display.display_text(nsew_string)
             print(nsew_string)
             if(nsew_string == "N"):

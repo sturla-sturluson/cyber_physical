@@ -1,2 +1,3 @@
 from .ip_helper import get_local_ip
 from .str_formatter import get_current_time_string,get_altitude_string,get_ip_string,get_local_ip,get_pressure_string,get_temperature_string
+from .rgb_to_name import rgb_to_name

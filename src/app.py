@@ -5,13 +5,15 @@ import time
 import datetime as dt
 from .display_slides import run_slide_show
 from .display_compass import run_display_compass
+from .display_rgb import run_slide_rgb_reader
 
 
 
 def app(
         slide:bool = False,
         slide_time:int = 4,
-        compass:bool = False
+        compass:bool = False,
+        rgb:bool = False
         ):
     
 
@@ -21,14 +23,15 @@ def app(
             run_slide_show(oled_display,slide_time)
         elif(compass):
             run_display_compass(oled_display)
+        elif(rgb):
+            run_slide_rgb_reader(oled_display)
         else:
             oled_display.display_text(get_ip_string())
             input("Press Enter to quit")
 
     except KeyboardInterrupt:
-        oled_display.display_text("Goodbye!")
-        time.sleep(4)
         oled_display.clear()
+        oled_display.cleanup()
     except Exception as e:
         print(e)
         oled_display.display_text("Error")
