@@ -36,27 +36,45 @@ class X_Y_Map:
     """
     def __init__(self) -> None:
         # Scale is the number of degrees per grid
-        # 1 would be 180x180
-        self.map = np.zeros((180,180),dtype=int)
+        # 1 would be 180x180 add 1 for the axis
+        dimensions = 180 + 1
+
+        self.map = np.zeros((dimensions,dimensions),dtype=int)
         # Create vertical Y axis and horizontal X axis
-        for i in range(180):
-            self.map[180//2,i] = 1
-            self.map[i,180//2] = 1
+
+        for i in range(dimensions):
+            self.map[dimensions//2,i] = -1
+            self.map[i,dimensions//2] = -1
 
     def add_cord(self,x:int|float,y:int|float):
-        # Need to divide by 2 since the map is 90x90 but range is -90 to 90
+        """Adds a cord to the map"""
+        # We add 90 to make it positive
         adj_x = int(x) + 90
         adj_y = int(y) + 90
         self.map[adj_x,adj_y] = 1
+
+    def _get_row_list(self,width:int,value:str = "  ",center:str = "Y ")->list[str]:
+        """Returns a list of strings for a row"""
+        list_str = list()
+        for i in range(width+1):
+            if(i == width//2):
+                list_str.append(center)
+            else:
+                list_str.append(value)
+        return list_str
     
     def get_scaled_map(self,scale:int = 1)->str:
         """Returns a scaled map"""
-        scaled_ratio = 180//scale
+        scaled_ratio = (180//scale) +1
         str_map = [[] for i in range(scaled_ratio)]
         for i in range(scaled_ratio):
-            str_map[i] = ["  " for j in range(scaled_ratio)]
-        for i in range(scaled_ratio):   
-            for j in range(scaled_ratio):
+            if(i == scaled_ratio//2):
+                str_map[i] = self._get_row_list(scaled_ratio,"X ","+ ")
+            else:
+                str_map[i] = self._get_row_list(scaled_ratio)
+            
+        for i in range(scaled_ratio-1):   
+            for j in range(scaled_ratio-1):
                 for x in range(scale):
                     for y in range(scale):
                         if(self.map[i*scale+x,j*scale+y] == 1):
@@ -150,16 +168,19 @@ class CompassCalibrator:
 
 
     async def _calibrate_loop(self):
+        """Calibration loop that runs until the stop event is set."""
+        re_draw_interval = 1
+        last_draw_time = time.time()
         while not self._stop_event.is_set():
             x,y,_ = self.magnetic_sensor.get_x_y_z()
             self.current_cord.set_cords(x,y)
             self.max_cord.set_max(x,y)
             self.min_cord.set_min(x,y)
             self.x_y_map.add_cord(x,y)
-            
-            self._print_screen()
-
-            await asyncio.sleep(0.5)
+            if(time.time() - last_draw_time > re_draw_interval):
+                last_draw_time = time.time()
+                self._print_screen()
+            await asyncio.sleep(0.05)
 
 
     def _input_thread(self):
@@ -207,16 +228,21 @@ class CompassCalibrator:
         }
         # Create the config directory if it doesn't exist
         Path(CONFIG_DIR).expanduser().mkdir(parents=True, exist_ok=True)
+        dir_path = Path(CONFIG_DIR).expanduser()
 
-        file_path = Path(CONFIG_DIR).expanduser() / FILE_NAME
+        file_path = dir_path / FILE_NAME
         with open(file_path, "w") as file:
             json.dump(data, file, indent=4)
         ## Save the 1:1 map
-        file_path_map = Path(CONFIG_DIR).expanduser() / "grid_map.txt"
-        with open(file_path_map, "w") as file:
-            file.write(str(self.x_y_map))
         print(f"Calibration data saved to {file_path}")
-        print(f"Grid map saved to {file_path_map}")
+        current_file_location = Path(__file__).parent
+        map_scales = [1,2,5]
+        for scale in map_scales:
+            file_path_map = current_file_location / f"graph_{scale}-1.txt"
+            map_str = self.x_y_map.get_scaled_map(scale)
+            with open(file_path_map, "w") as file:
+                file.write(map_str)
+            print(f"Grid map saved to {file_path_map}")
 
 
 

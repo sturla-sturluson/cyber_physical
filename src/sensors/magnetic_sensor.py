@@ -167,6 +167,11 @@ class MagneticSensor(IMagneticSensor):
         """Returns the x,y,z values of the magnetic sensor"""
         x, y, z = self._get_micro_teslas()
         return x, y, z
+    
+    def get_raw_x_y_z(self):
+        """Returns the x,y,z values of the magnetic sensor"""
+        x, y, z = self._get_micro_teslas()
+        return x, y, z
 
     def _calculate_orientation(self, x, y):
         if x == 0:
