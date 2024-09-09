@@ -18,21 +18,11 @@ FILE_NAME = "compass_calibration.json"
 class IMagneticSensor(Protocol):
     def get_x_y_z(self) -> tuple[float,float,float]:
         ...
-    def get_orientation(self) -> int:
-        ...
-    @classmethod
-    def get_NSEW_string(cls,degrees:int) -> str:
-        ...
 
 class FakeMagneticSensor(IMagneticSensor):
     """Fake magnetic sensor for testing"""
     def get_x_y_z(self) -> tuple[float,float,float]:
         return random.uniform(-100,100),random.uniform(-100,100),random.uniform(-100,100)
-    def get_orientation(self) -> int:
-        return random.randint(0,360)
-    @classmethod
-    def get_NSEW_string(cls,degrees:int) -> str:
-        return random.choice(["N","S","E","W"])
 
 class Cords:
     name:str = ""
