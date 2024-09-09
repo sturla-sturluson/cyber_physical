@@ -7,10 +7,11 @@ import random
 import os
 import asyncio
 import threading
-from src.sensors import MagneticSensor
 import json
 from pathlib import Path
 import pprint
+from adafruit_lsm303dlh_mag import LSM303DLH_Mag
+import busio
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -27,12 +28,22 @@ class FakeMagneticSensor(IMagneticSensor):
     def get_x_y_z(self) -> tuple[float,float,float]:
         return random.uniform(-90,90),random.uniform(-90,90),random.uniform(-90,90)
     
-class X_Y_Map:
-    """ A 90x*90 grid of x,y values
-    from -90 to 90 degrees
-    cord (52,32) would be added 26,16
-    All of them will be 0, if a cord is added it will be 1
+
+class MagneticSensor(IMagneticSensor):
+    """Magnetic sensor that uses the LSM303DLH_Mag sensor"""
+    def __init__(self) -> None:
+        i2c = busio.I2C(board.SCL, board.SDA)
+        self.mag = LSM303DLH_Mag(i2c)
+
+    def get_x_y_z(self) -> tuple[float,float,float]:
+        x, y, z = self.mag.magnetic
+        return x, y, z
     
+class X_Y_Map:
+    """ A 180x180 map that shows the cords
+    from -90 to 90 degrees
+    cord (52,32) would be added map[142,122]
+    All of them will be 0, if a cord is added it will be 1
     """
     def __init__(self) -> None:
         # Scale is the number of degrees per grid
@@ -71,8 +82,7 @@ class X_Y_Map:
             if(i == scaled_ratio//2):
                 str_map[i] = self._get_row_list(scaled_ratio,"X ","+ ")
             else:
-                str_map[i] = self._get_row_list(scaled_ratio)
-            
+                str_map[i] = self._get_row_list(scaled_ratio)         
         for i in range(scaled_ratio-1):   
             for j in range(scaled_ratio-1):
                 for x in range(scale):
@@ -82,8 +92,6 @@ class X_Y_Map:
                             break
             
         return "\n".join(["".join(row) for row in str_map])
-
-
 
     def __str__(self) -> str:
         return self.get_scaled_map(1)
@@ -163,9 +171,6 @@ class CompassCalibrator:
             print("Calibration Done")
         else:
             print(f"Calibrating for {self.current_state}")
-
-
-
 
     async def _calibrate_loop(self):
         """Calibration loop that runs until the stop event is set."""
@@ -248,7 +253,7 @@ class CompassCalibrator:
 
 
 def main():
-    compass_calibrator = CompassCalibrator(MagneticSensor())
+    compass_calibrator = CompassCalibrator(FakeMagneticSensor())
     asyncio.run(compass_calibrator.calibrate())
 
 
