@@ -11,3 +11,6 @@ class RgbSensor():
 
     def get_rgb(self):
         return self.sensor.color_rgb_bytes
+    
+    def get_color(self):
+        return self.sensor.color

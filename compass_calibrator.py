@@ -10,6 +10,9 @@ import threading
 from src.sensors import MagneticSensor
 import json
 from pathlib import Path
+import pprint
+
+pp = pprint.PrettyPrinter(indent=4)
 
 CONFIG_DIR = "~/.config/cyber_physical_systems"
 FILE_NAME = "compass_calibration.json"
@@ -22,7 +25,50 @@ class IMagneticSensor(Protocol):
 class FakeMagneticSensor(IMagneticSensor):
     """Fake magnetic sensor for testing"""
     def get_x_y_z(self) -> tuple[float,float,float]:
-        return random.uniform(-100,100),random.uniform(-100,100),random.uniform(-100,100)
+        return random.uniform(-90,90),random.uniform(-90,90),random.uniform(-90,90)
+    
+class X_Y_Map:
+    """ A 90x*90 grid of x,y values
+    from -90 to 90 degrees
+    cord (52,32) would be added 26,16
+    All of them will be 0, if a cord is added it will be 1
+    
+    """
+    def __init__(self) -> None:
+        # Scale is the number of degrees per grid
+        # 1 would be 180x180
+        self.map = np.zeros((180,180),dtype=int)
+        # Create vertical Y axis and horizontal X axis
+        for i in range(180):
+            self.map[180//2,i] = 1
+            self.map[i,180//2] = 1
+
+    def add_cord(self,x:int|float,y:int|float):
+        # Need to divide by 2 since the map is 90x90 but range is -90 to 90
+        adj_x = int(x) + 90
+        adj_y = int(y) + 90
+        self.map[adj_x,adj_y] = 1
+    
+    def get_scaled_map(self,scale:int = 1)->str:
+        """Returns a scaled map"""
+        scaled_ratio = 180//scale
+        str_map = [[] for i in range(scaled_ratio)]
+        for i in range(scaled_ratio):
+            str_map[i] = ["  " for j in range(scaled_ratio)]
+        for i in range(scaled_ratio):   
+            for j in range(scaled_ratio):
+                for x in range(scale):
+                    for y in range(scale):
+                        if(self.map[i*scale+x,j*scale+y] == 1):
+                            str_map[i][j] = "1 "
+                            break
+            
+        return "\n".join(["".join(row) for row in str_map])
+
+
+
+    def __str__(self) -> str:
+        return self.get_scaled_map(1)
 
 class Cords:
     name:str = ""
@@ -70,6 +116,10 @@ class CompassCalibrator:
         self._update_ui_event = asyncio.Event()
         self._stop_event = threading.Event()
 
+        self.x_y_map = X_Y_Map()
+
+
+
     @property
     def current_state_index(self):
         """Returns the current state index"""
@@ -85,6 +135,7 @@ class CompassCalibrator:
     def _print_screen(self):
         os.system('clear')
         print("Compass Calibrator")
+        print(self.x_y_map.get_scaled_map(10))
         print(f"{self.current_cord}")
         print(f"{self.max_cord}")
         print(f"{self.min_cord}")
@@ -104,6 +155,7 @@ class CompassCalibrator:
             self.current_cord.set_cords(x,y)
             self.max_cord.set_max(x,y)
             self.min_cord.set_min(x,y)
+            self.x_y_map.add_cord(x,y)
             
             self._print_screen()
 
@@ -116,7 +168,7 @@ class CompassCalibrator:
             input(f"Press enter to calibrate for {state}")
             self._save_user_state()
             self._update_ui_event.set()  # Signal to update the screen after user input
-
+        input(f"Go back to North and press enter to finish calibration")
         self._stop_event.set()  # Signal to stop the loop once all inputs are done
 
     def start_input_thread(self):
@@ -159,7 +211,13 @@ class CompassCalibrator:
         file_path = Path(CONFIG_DIR).expanduser() / FILE_NAME
         with open(file_path, "w") as file:
             json.dump(data, file, indent=4)
+        ## Save the 1:1 map
+        file_path_map = Path(CONFIG_DIR).expanduser() / "grid_map.txt"
+        with open(file_path_map, "w") as file:
+            file.write(str(self.x_y_map))
         print(f"Calibration data saved to {file_path}")
+        print(f"Grid map saved to {file_path_map}")
+
 
 
 
