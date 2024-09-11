@@ -253,7 +253,7 @@ class CompassCalibrator:
 
 
 def main():
-    compass_calibrator = CompassCalibrator(FakeMagneticSensor())
+    compass_calibrator = CompassCalibrator(MagneticSensor())
     asyncio.run(compass_calibrator.calibrate())
 
 
