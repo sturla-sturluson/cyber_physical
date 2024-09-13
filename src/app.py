@@ -3,9 +3,8 @@ from .utils import get_current_time_string, get_ip_string, get_pressure_string, 
 from .display import OledDisplay
 import time
 import datetime as dt
-from .display_slides import run_slide_show
-from .display_compass import run_display_compass
-from .display_rgb import run_slide_rgb_reader
+from .ui_funcs import run_slide_show,run_display_compass,run_slide_rgb_reader
+
 
 
 

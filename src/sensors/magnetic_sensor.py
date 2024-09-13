@@ -8,6 +8,7 @@ from ..interfaces import IMagneticSensor
 import json
 from ..models import Cords
 from pathlib import Path
+from .. import utils as UTILS
 
 CONFIG_DIR = "~/.config/cyber_physical_systems"
 FILE_NAME = "compass_calibration.json"
@@ -20,36 +21,6 @@ DEFAULT_CALIBRATION = {
     "south": [0.0,-90.0],
     "west": [-90.0,0.0],
 }
-
-def _is_valid_cords(cords:tuple[int|float,int|float]):
-    x_cord, y_cord = cords
-    x_cord = float(x_cord)
-    y_cord = float(y_cord)
-    if x_cord < -90 or x_cord > 90:
-        raise ValueError("X cord must be between -90 and 90")
-    if y_cord < -90 or y_cord > 90:
-        raise ValueError("Y cord must be between -90 and 90")   
-
-
-def _get_dot_product(cord1:Cords,cord2:Cords):
-    x1 = cord1.x
-    y1 = cord1.y
-    x2 = cord2.x
-    y2 = cord2.y
-    return x1*x2 + y1*y2
-
-def _get_angle(dot_product:int|float,cord1:Cords,cord2:Cords):
-    magnitude1 = cord1.get_magnitude()
-    magnitude2 = cord2.get_magnitude()
-    theta = dot_product / (magnitude1 * magnitude2)
-    degrees = math.degrees(math.acos(theta))
-    return degrees
-
-def _get_midpoints(max_cords:Cords,min_cords:Cords):
-    """Returns the midpoints of the max and min cords"""
-    x_midpoint = (max_cords.x + min_cords.x) / 2
-    y_midpoint = (max_cords.y + min_cords.y) / 2
-    return x_midpoint, y_midpoint
 
 class MagneticSensor(IMagneticSensor):
     MAX_CORDS = Cords(*DEFAULT_CALIBRATION["max"])
@@ -116,7 +87,7 @@ class MagneticSensor(IMagneticSensor):
 
         max_cords = Cords(*data["max"])
         min_cords = Cords(*data["min"])
-        x_midpoint, y_midpoint = _get_midpoints(max_cords, min_cords)
+        x_midpoint, y_midpoint = UTILS.get_midpoints(max_cords, min_cords)
         sensor_north = Cords(x_midpoint, max_cords.y)
         sensor_east = Cords(max_cords.x, y_midpoint)
         sensor_south = Cords(x_midpoint, min_cords.y)
@@ -153,9 +124,7 @@ class MagneticSensor(IMagneticSensor):
         # User north is (33.6,-9,91)
         # We use the rotation matrix to rotate the sensor's output to match the user's perceived directions
 
-        dot_product = _get_dot_product(sensor_cord, user_cord)
-
-        angle = _get_angle(dot_product, sensor_cord, user_cord)
+        angle = UTILS.get_angle(sensor_cord, user_cord)
 
         return angle
 

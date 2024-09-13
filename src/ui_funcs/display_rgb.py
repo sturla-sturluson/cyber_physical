@@ -1,6 +1,6 @@
-from .display import OledDisplay
-from .sensors import RgbSensor
-from .utils import rgb_to_name
+from ..display import OledDisplay
+from ..sensors import RgbSensor
+from ..utils import rgb_to_name
 import time
 import datetime as dt
 import os

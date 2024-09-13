@@ -1,6 +1,6 @@
-from .display import OledDisplay
-from .sensors import MplSensor
-from .utils import get_current_time_string, get_ip_string, get_pressure_string, get_temperature_string, get_altitude_string
+from ..display import OledDisplay
+from ..sensors import MplSensor
+from ..utils import get_current_time_string, get_ip_string, get_pressure_string, get_temperature_string, get_altitude_string
 import time
 import datetime as dt
 
