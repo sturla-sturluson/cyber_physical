@@ -1,5 +1,6 @@
 import board
 from adafruit_tcs34725 import TCS34725
+from ..utils import rgb_to_name
 
 
 class RgbSensor():
@@ -14,3 +15,8 @@ class RgbSensor():
     
     def get_color(self):
         return self.sensor.color
+    
+    def get_color_name(self):
+        """Returns the name of the color, that the sensor is currently detecting"""
+        r,g,b = self.get_rgb()
+        return rgb_to_name(r,g,b)
