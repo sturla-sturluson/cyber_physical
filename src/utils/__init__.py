@@ -3,3 +3,4 @@ from .str_formatter import get_current_time_string,get_altitude_string,get_ip_st
 from .rgb_to_name import rgb_to_name
 from .math_utils import get_angle,get_dot_product,get_midpoints,degrees_to_coordinates,calculate_orientation
 from .mag_sensor_utils import get_translation_function, get_NSEW_string
+from .gpio_pin import get_gpio_pin_number
