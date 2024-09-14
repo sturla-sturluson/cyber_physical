@@ -8,3 +8,6 @@ class IMagneticSensor(Protocol):
     @classmethod
     def get_NSEW_string(cls,degrees:int) -> str:
         ...
+    def get_data(self)->tuple[int,tuple[int,int],str]:
+        """Returns a tuple of (Angle,(X,Y),"NESW string")"""
+        ...

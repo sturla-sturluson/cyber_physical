@@ -4,3 +4,4 @@ from .rgb_to_name import rgb_to_name
 from .math_utils import get_angle,get_dot_product,get_midpoints,degrees_to_coordinates,calculate_orientation
 from .mag_sensor_utils import get_translation_function, get_NSEW_string
 from .gpio_pin import get_gpio_pin_number
+from .x_y_map import X_Y_Map

@@ -4,6 +4,7 @@ from .display import OledDisplay
 import time
 import datetime as dt
 from .ui_funcs import run_slide_show,run_display_compass,run_slide_rgb_reader
+from .compass_calibrator import run_calibration
 
 
 
@@ -12,7 +13,8 @@ def app(
         slide:bool = False,
         slide_time:int = 4,
         compass:bool = False,
-        rgb:bool = False
+        rgb:bool = False,
+        calibrate:bool = False,
         ):
     
 
@@ -24,6 +26,8 @@ def app(
             run_display_compass(oled_display)
         elif(rgb):
             run_slide_rgb_reader(oled_display)
+        elif(calibrate):
+            run_calibration()
         else:
             oled_display.display_text(get_ip_string())
             input("Press Enter to quit")

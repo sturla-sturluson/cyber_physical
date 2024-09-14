@@ -22,17 +22,33 @@ class X_Y_Map:
     cord (52,32) would be added map[142,122]
     All of them will be 0, if a cord is added it will be 1
     """
-    def __init__(self) -> None:
+
+
+
+    def __init__(self,display_count:int = -1) -> None:
         # Scale is the number of degrees per grid
         # 1 would be 180x180 add 1 for the axis
         dimensions = 180 + 1
 
         self.map = np.zeros((dimensions,dimensions),dtype=int)
         # Create vertical Y axis and horizontal X axis
+        self._added_cords = [] # List of cords that have been added
+        self._display_count = display_count # How many cords to display, -1 for all
 
-        for i in range(dimensions):
-            self.map[dimensions//2,i] = -1
-            self.map[i,dimensions//2] = -1
+        # for i in range(dimensions):
+        #     self.map[dimensions//2,i] = -1
+        #     self.map[i,dimensions//2] = -1
+
+    def _update_display_count(self):
+        """Updates the display count"""
+        if self._display_count == -1:
+            return
+        if len(self._added_cords) > self._display_count:
+            for i in range(len(self._added_cords) - self._display_count):
+                x,y = self._added_cords.pop(0)
+                row_index = 180-max(min(int(y) + 90, 180), 0) 
+                col_index = max(min(int(x) + 90, 180), 0)
+                self.map[row_index,col_index] -= 1
 
     def add_cord(self,x:int|float,y:int|float):
         """Adds a cord to the map"""
@@ -44,9 +60,18 @@ class X_Y_Map:
         row_index = 180-max(min(int(y) + 90, 180), 0) 
         # Column index is -90 = 0 and 90 = 180
         col_index = max(min(int(x) + 90, 180), 0)
-        self.map[row_index,col_index] = 1
+        self.map[row_index,col_index] += 1
+        self._added_cords.append((x,y))
+        self._update_display_count()
 
-
+    def _get_icon(self,count:int)->str:
+        """Gets correctly formatted number"""
+        if count == 0:
+            return "  "
+        elif count < 10:
+            return f"{count} "
+        else:
+            return f"9+"
 
     def _get_row_list(self,width:int,value:str = "  ",center:str = "Y ")->list[str]:
         """Returns a list of strings for a row"""
@@ -70,11 +95,13 @@ class X_Y_Map:
                 str_map[i] = self._get_row_list(scaled_ratio)         
         for i in range(scaled_ratio-1):   
             for j in range(scaled_ratio-1):
+                grid_count = 0
                 for x in range(scale):
                     for y in range(scale):
-                        if(self.map[i*scale+x,j*scale+y] == 1):
-                            str_map[i][j+1] = _get_color_string("1 ","green")
-                            break
+                        grid_count += self.map[i*scale+x,j*scale+y]
+                if(grid_count > 0):
+                    str_map[i][j+1] = _get_color_string(self._get_icon(grid_count),"green")
+
         # Settings NESW directions with N,E,S,W
         new_str_map = []
         # Adding top border
@@ -95,10 +122,18 @@ class X_Y_Map:
     
 
 def main():
-    map = X_Y_Map()
+    import random
+    import os
+    import time
+    map = X_Y_Map(10)
     map.add_cord(0,90)
-    #map.add_cord(89,1)
-    print(map.get_scaled_map(10))
+    while True:
+        os.system('clear')
+        x = random.uniform(-90,90)
+        y = random.uniform(-90,90)
+        map.add_cord(x,y)
+        print(map.get_scaled_map(10))
+        time.sleep(1)
 
 if __name__ == "__main__":
     main()

@@ -12,20 +12,16 @@ from pathlib import Path
 import pprint
 from adafruit_lsm303dlh_mag import LSM303DLH_Mag
 import busio
-from src.utils.x_y_map import X_Y_Map
-from src.utils import degrees_to_coordinates
+from .utils import X_Y_Map
+from .utils import degrees_to_coordinates,get_NSEW_string
 
-pp = pprint.PrettyPrinter(indent=4)
 
 CONFIG_DIR = "~/.config/cyber_physical_systems"
 FILE_NAME = "compass_calibration.json"
 
 
-class IMagneticSensor(Protocol):
-    def get_x_y_z(self) -> tuple[float,float,float]:
-        ...
 
-class FakeMagneticSensor(IMagneticSensor):
+class FakeMagneticSensor():
     LAST_ANGLE = 0
     """Fake magnetic sensor for testing"""
     def get_x_y_z(self) -> tuple[float,float,float]:
@@ -36,8 +32,16 @@ class FakeMagneticSensor(IMagneticSensor):
         y = random.uniform(y-2,y+2)
         return x,y,random.uniform(-90,90)
     
+    def get_orientation(self) -> int:
+        return int(self.LAST_ANGLE)
+    def get_data(self) -> tuple[int, tuple[int, int], str]:
+        x,y,_ = self.get_x_y_z()
+        nesw = get_NSEW_string(int(self.LAST_ANGLE))
+        return int(self.LAST_ANGLE),(int(x),int(y)),nesw
+        
+    
 
-class MagneticSensor(IMagneticSensor):
+class MagneticSensor():
     """Magnetic sensor that uses the LSM303DLH_Mag sensor"""
     def __init__(self) -> None:
         i2c = busio.I2C(board.SCL, board.SDA)
@@ -81,7 +85,7 @@ class Cords:
 
 
 class CompassCalibrator:
-    def __init__(self, magnetic_sensor:IMagneticSensor) -> None:
+    def __init__(self, magnetic_sensor:MagneticSensor) -> None:
         self.magnetic_sensor = magnetic_sensor
         self.current_cord = Cords(name="Current X/Y")
         self.max_cord = Cords(name="MAX X/Y")
@@ -198,11 +202,9 @@ class CompassCalibrator:
 
 
 
-def main():
-    compass_calibrator = CompassCalibrator(FakeMagneticSensor())
-    # compass_calibrator = CompassCalibrator(MagneticSensor())
+def run_calibration():
+    # compass_calibrator = CompassCalibrator(FakeMagneticSensor())
+    compass_calibrator = CompassCalibrator(MagneticSensor())
     asyncio.run(compass_calibrator.calibrate())
 
 
-if __name__ == '__main__':
-    main()
