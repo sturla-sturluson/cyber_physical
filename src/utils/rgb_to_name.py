@@ -150,17 +150,37 @@ _CSS3_NAMES_TO_HEX = {
     "yellow": "#ffff00",
     # "yellowgreen": "#9acd32",
 }
+_COLORS = {
+    "white": (255, 255, 255),
+    "red": (255, 0, 0),
+    "lime": (0, 255, 0),
+    "blue": (0, 0, 255),
+    "yellow": (255, 255, 0),
+    "cyan": (0, 255, 255),
+    "magenta": (255, 0, 255),
+    "silver": (192, 192, 192),
+    "gray": (128, 128, 128),
+    "light-red": (128, 0, 0),
+    "olive": (128, 128, 0),
+    "green": (0, 128, 0),
+    "purple": (128, 0, 128),
+    "teal": (0, 128, 128),
+    "navy": (0, 0, 128),
+}
 def rgb_to_hex(r:int,g:int,b:int) -> str:
     """Converts an RGB value to a hex string."""
     return webcolors.rgb_to_hex((r, g, b))
+
+def calc_distance(color1:tuple[int,int,int],color2:tuple[int,int,int]) -> float:
+    """Calculate the distance between two RGB colors."""
+    return math.sqrt(sum((x - y) ** 2 for x, y in zip(color1, color2)))
 
 def closest_color(requested_color:tuple[int,int,int]) -> str:
     """Find the closest color name to the requested RGB value."""
     min_distance = float('inf')
     closest_name = "Unknown"
-    for name, hex in _CSS3_NAMES_TO_HEX.items():
-        color = webcolors.hex_to_rgb(hex)
-        distance = math.sqrt(sum((a - b) ** 2 for a, b in zip(requested_color, color)))
+    for name, rgb in _COLORS.items():
+        distance = calc_distance(requested_color, rgb)
         if distance < min_distance:
             min_distance = distance
             closest_name = name
@@ -169,11 +189,6 @@ def closest_color(requested_color:tuple[int,int,int]) -> str:
 
 def rgb_to_name(r:int,g:int,b:int) -> str:
     """Converts an RGB value to a color name"""
-    try:
-        # Try to get the exact CSS3 color name
-        return webcolors.rgb_to_name((r, g, b))
-    except ValueError:
-        # If no exact match is found, get the closest color name
-        closest_name = closest_color((r, g, b))
-        return closest_name
+    closest_name = closest_color((r, g, b))
+    return closest_name
 
