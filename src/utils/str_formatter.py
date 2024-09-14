@@ -1,6 +1,13 @@
+# use future imports to avoid circular imports
+from __future__ import annotations
+from src.sensors.mpl_sensor import MplSensor
+
+
+
+
 from .ip_helper import get_local_ip
 import datetime as dt
-from ..sensors import MplSensor
+
 
 def get_ip_string():
     ip_address = get_local_ip()

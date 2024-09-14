@@ -12,6 +12,8 @@ from pathlib import Path
 import pprint
 from adafruit_lsm303dlh_mag import LSM303DLH_Mag
 import busio
+from src.utils.x_y_map import X_Y_Map
+from src.utils import degrees_to_coordinates
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -24,9 +26,15 @@ class IMagneticSensor(Protocol):
         ...
 
 class FakeMagneticSensor(IMagneticSensor):
+    LAST_ANGLE = 0
     """Fake magnetic sensor for testing"""
     def get_x_y_z(self) -> tuple[float,float,float]:
-        return random.uniform(-90,90),random.uniform(-90,90),random.uniform(-90,90)
+        self.LAST_ANGLE += random.uniform(-1,2)
+        self.LAST_ANGLE = self.LAST_ANGLE % 360
+        x,y = degrees_to_coordinates(int(self.LAST_ANGLE))
+        x = random.uniform(x-2,x+2)
+        y = random.uniform(y-2,y+2)
+        return x,y,random.uniform(-90,90)
     
 
 class MagneticSensor(IMagneticSensor):
@@ -38,63 +46,7 @@ class MagneticSensor(IMagneticSensor):
     def get_x_y_z(self) -> tuple[float,float,float]:
         x, y, z = self.mag.magnetic
         return x, y, z
-    
-class X_Y_Map:
-    """ A 180x180 map that shows the cords
-    from -90 to 90 degrees
-    cord (52,32) would be added map[142,122]
-    All of them will be 0, if a cord is added it will be 1
-    """
-    def __init__(self) -> None:
-        # Scale is the number of degrees per grid
-        # 1 would be 180x180 add 1 for the axis
-        dimensions = 180 + 1
 
-        self.map = np.zeros((dimensions,dimensions),dtype=int)
-        # Create vertical Y axis and horizontal X axis
-
-        for i in range(dimensions):
-            self.map[dimensions//2,i] = -1
-            self.map[i,dimensions//2] = -1
-
-    def add_cord(self,x:int|float,y:int|float):
-        """Adds a cord to the map"""
-        # We add 90 to make it positive
-        adj_x = int(x) + 90
-        adj_y = int(y) + 90
-        self.map[adj_x,adj_y] = 1
-
-    def _get_row_list(self,width:int,value:str = "  ",center:str = "Y ")->list[str]:
-        """Returns a list of strings for a row"""
-        list_str = list()
-        for i in range(width+1):
-            if(i == width//2):
-                list_str.append(center)
-            else:
-                list_str.append(value)
-        return list_str
-    
-    def get_scaled_map(self,scale:int = 1)->str:
-        """Returns a scaled map"""
-        scaled_ratio = (180//scale) +1
-        str_map = [[] for i in range(scaled_ratio)]
-        for i in range(scaled_ratio):
-            if(i == scaled_ratio//2):
-                str_map[i] = self._get_row_list(scaled_ratio,"X ","+ ")
-            else:
-                str_map[i] = self._get_row_list(scaled_ratio)         
-        for i in range(scaled_ratio-1):   
-            for j in range(scaled_ratio-1):
-                for x in range(scale):
-                    for y in range(scale):
-                        if(self.map[i*scale+x,j*scale+y] == 1):
-                            str_map[i][j] = "1 "
-                            break
-            
-        return "\n".join(["".join(row) for row in str_map])
-
-    def __str__(self) -> str:
-        return self.get_scaled_map(1)
 
 class Cords:
     name:str = ""
@@ -137,7 +89,7 @@ class CompassCalibrator:
 
         # User saved positions NESW (Clockwise)
         self.user_positions = []
-        self.states = ["NORTH","EAST","SOUTH","WEST"]
+        self.states = ["CIRCLE","NORTH"]
 
         self._update_ui_event = asyncio.Event()
         self._stop_event = threading.Event()
@@ -165,16 +117,14 @@ class CompassCalibrator:
         print(f"{self.current_cord}")
         print(f"{self.max_cord}")
         print(f"{self.min_cord}")
-        for user_cord in self.user_positions:
-            print(f"{user_cord}")
-        if(self.current_state_index >= len(self.states)):
-            print("Calibration Done")
-        else:
-            print(f"Calibrating for {self.current_state}")
+        if(self.current_state == "CIRCLE"):
+            print("Rotate in a circle\nPress Enter when done")
+        if(self.current_state == "NORTH"):
+            print("Rotate to where you Want North to be\nPress Enter when done")
 
     async def _calibrate_loop(self):
         """Calibration loop that runs until the stop event is set."""
-        re_draw_interval = 1
+        re_draw_interval = 0.5
         last_draw_time = time.time()
         while not self._stop_event.is_set():
             x,y,_ = self.magnetic_sensor.get_x_y_z()
@@ -185,16 +135,15 @@ class CompassCalibrator:
             if(time.time() - last_draw_time > re_draw_interval):
                 last_draw_time = time.time()
                 self._print_screen()
-            await asyncio.sleep(0.05)
+            await asyncio.sleep(0.10)
 
 
     def _input_thread(self):
         """Handle user input in a separate thread."""
         for state in self.states:
-            input(f"Press enter to calibrate for {state}")
+            input()
             self._save_user_state()
             self._update_ui_event.set()  # Signal to update the screen after user input
-        input(f"Go back to North and press enter to finish calibration")
         self._stop_event.set()  # Signal to stop the loop once all inputs are done
 
     def start_input_thread(self):
@@ -226,10 +175,7 @@ class CompassCalibrator:
         data = {
             "max": [self.max_cord.x,self.max_cord.y],
             "min": [self.min_cord.x,self.min_cord.y],
-            "north": [self.user_positions[0].x,self.user_positions[0].y],
-            "east": [self.user_positions[1].x,self.user_positions[1].y],
-            "south": [self.user_positions[2].x,self.user_positions[2].y],
-            "west": [self.user_positions[3].x,self.user_positions[3].y],
+            "north": [self.user_positions[1].x,self.user_positions[1].y],
         }
         # Create the config directory if it doesn't exist
         Path(CONFIG_DIR).expanduser().mkdir(parents=True, exist_ok=True)
@@ -253,7 +199,8 @@ class CompassCalibrator:
 
 
 def main():
-    compass_calibrator = CompassCalibrator(MagneticSensor())
+    compass_calibrator = CompassCalibrator(FakeMagneticSensor())
+    # compass_calibrator = CompassCalibrator(MagneticSensor())
     asyncio.run(compass_calibrator.calibrate())
 
 

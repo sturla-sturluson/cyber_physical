@@ -15,6 +15,33 @@ def get_dot_product(cord1:Cords,cord2:Cords):
     y2 = cord2.y
     return x1*x2 + y1*y2
 
+
+def degrees_to_coordinates(angle_degrees: int) -> tuple[float, float]:
+    # Convert angle from degrees to radians, and reverse for clockwise
+    angle_degrees -= 90
+    angle_radians = math.radians(360 - angle_degrees)
+
+    # Calculate the x and y coordinates
+    x = 90 * math.cos(angle_radians)
+    y = 90 * math.sin(angle_radians)
+
+    return x, y
+
+def calculate_orientation(x: int | float, y: int | float) -> int:
+    """Takes in x and y coordinates and returns the orientation in degrees.
+    X and Y range from -90 to 90.
+    0,90 -> 0  # North
+    90,0 -> 90  # East
+    0,-90 -> 180  # South
+    -90,0 -> 270  # West
+    """
+    angle_degrees = math.degrees(math.atan2(y, x))   
+    adjusted_angle = 90 - angle_degrees # Adjust the angle to match the orientation
+    # Clamp the angle to 0-360
+    if adjusted_angle < 0:
+        adjusted_angle += 360
+    return int(round(adjusted_angle))
+
 def get_angle(cord1:Cords,cord2:Cords):
     """Returns the angle between two cords
     Args:

@@ -1,4 +1,8 @@
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except RuntimeError:
+    #from src.utils import mock_gpio as GPIO
+    ...
 
 class Led:
     LED_PIN:int

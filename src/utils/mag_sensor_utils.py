@@ -3,6 +3,7 @@ from .. import utils as UTILS
 from ..models import Cords
 import json
 import numpy as np
+from typing import Callable
 
 DEFAULT_CALIBRATION = {
     "max": [90.0,90.0],
@@ -45,89 +46,87 @@ def _load_configs():
         print("Using default calibration values")
         return _DEFAULT_CALIBRATION
             
-def _generate_translation_matrix(angle:float)->np.ndarray:
+def _generate_translation_matrix(min_cords:Cords,max_cords:Cords)->np.ndarray:
+    """Generates a matrix that normalizes the cordinates from the calibration data
+    Max = (71,50) # X,Y
+    Min = (-35,-45) 
+    Midpoint = (18,2.5)
+    (71,50) -> (90,90)
+    (-35,50) -> (-90,90)
+    (18,2.5) -> (0,0)
+    """
+    x_midpoint, y_midpoint = UTILS.get_midpoints(max_cords, min_cords)
+    translation_matrix = np.array([
+        [1, 0, -x_midpoint],
+        [0, 1, -y_midpoint],
+        [0, 0, 1]
+    ])
+    scale_x = 180 / (max_cords.x - min_cords.x)
+    scale_y = 180 / (max_cords.y - min_cords.y)
+    scale_matrix = np.array([
+        [scale_x, 0, 0],
+        [0, scale_y, 0],
+        [0, 0, 1]
+    ])
+    # @ is the matrix multiplication operator
+    return scale_matrix @ translation_matrix
+
+
+def _generate_rotation_matrix(angle:int)->np.ndarray:
     cos_a = np.cos(np.radians(angle))
     sin_a = np.sin(np.radians(angle))
     return np.array([[cos_a,-sin_a],[sin_a,cos_a]])
 
 
-def get_translation_matrix()->np.ndarray:
+def get_translation_function()->Callable[[int|float,int|float],tuple[int,int]]:
     max_cords,min_cords,north_cords = _load_configs()
-    # Get the midpoints
+    translation_matrix = _generate_translation_matrix(min_cords,max_cords)
     x_midpoint, y_midpoint = UTILS.get_midpoints(max_cords, min_cords)
-    # Now we get the north cord requested by the user
     sensor_north = Cords(x_midpoint, max_cords.y)
-    # Get the angle between the sensor north and the north cords
-    angle = UTILS.get_angle(sensor_north,north_cords)
-    # Get the translation matrix
+    angle = UTILS.get_angle(north_cords,sensor_north)
+    rotation_matrix = _generate_rotation_matrix((int(angle)))
+
+    def translate(x:int|float,y:int|float)->tuple[int,int]:
+        """Translates the cordinates from the calibration data"""
+        # Checking if the cordinates are within the calibration range
+        x = max(min(x, int(max_cords.x)), int(min_cords.x))
+        y = max(min(y, int(max_cords.y)), int(min_cords.y))
+        cords = np.array([x,y,1])
+        translated_cords = translation_matrix @ cords
+        rotated_cords = rotation_matrix @ translated_cords[:2]
+        #return (int(translated_cords[0]),int(translated_cords[1]))
+        return (int(rotated_cords[0]),int(rotated_cords[1]) )
     
+    return translate
 
-def _get_configs(self):
-        """Loads the calibration file"""
-        data = {}
-        try:
-            # Check if the calibration file exists
-            Path(CONFIG_DIR).mkdir(parents=True, exist_ok=True) 
-            # Check if the file exists
-            file_path = Path(CONFIG_DIR).expanduser() / FILE_NAME
-            
-            with open(file_path, "r") as f:
-                data = json.load(f)
-                # Format json to a dictionary
 
-                data = dict(data)
+def get_NSEW_string(degrees:int):
+    """Takes in the degrees and returns the lettering for what direction it is
+    338°-22° -> N
+    23°-67° -> NE
+    68°-112° -> E
+    113°-157° -> SE
+    158°-202° -> S
+    203°-247° -> SW
+    248°-292° -> W
+    293°-337° -> NW
+    """      
 
-                # Check if the calibration file is valid
-                print(data)
-                # for key in DEFAULT_CALIBRATION.keys():
-                #     data = data.get(key)
-                #     _is_valid_cords(data)
-                self._set_configs(data)
-
-        except FileNotFoundError:
-            print("Calibration file not found, using default values")
-            file_path = Path(CONFIG_DIR).expanduser() / FILE_NAME
-            print(f"FilePath: {file_path}")
-            print(f"File Exists: {file_path.exists()}")
-            # LS of the directory
-            print(f"Directory Contents: {list(Path(CONFIG_DIR).iterdir())}")
-            data = DEFAULT_CALIBRATION
-            self._set_configs(data)
-        except ValueError as e:
-            print(e)
-            print("Using default calibration values")
-            data = DEFAULT_CALIBRATION
-            self._set_configs(data)
-
-    def _get_converted_data(self,data:list):
-        """Converts the list of strings to a list of floats"""
-        return [float(x) for x in data]
-
-    def _set_configs(self,data:dict[str,list[int|float]]):
-        """Saves the calibration data"""
-
-        max_cords = Cords(*data["max"])
-        min_cords = Cords(*data["min"])
-        x_midpoint, y_midpoint = UTILS.get_midpoints(max_cords, min_cords)
-        sensor_north = Cords(x_midpoint, max_cords.y)
-        sensor_east = Cords(max_cords.x, y_midpoint)
-        sensor_south = Cords(x_midpoint, min_cords.y)
-        sensor_west = Cords(min_cords.x, y_midpoint)
-        # Check if all the angles are close enough to 90 degrees
-        north_angle = self._get_rotation(sensor_north,Cords(*data["north"]))
-        east_angle = self._get_rotation(sensor_east,Cords(*data["east"]))
-        south_angle = self._get_rotation(sensor_south,Cords(*data["south"]))
-        west_angle = self._get_rotation(sensor_west,Cords(*data["west"]))
-        print(f"North angle: {north_angle}")
-        print(f"East angle: {east_angle}")
-        print(f"South angle: {south_angle}")
-        print(f"West angle: {west_angle}")
-
-        # Setting all the data
-        self.MAX_CORDS = max_cords
-        self.MIN_CORDS = min_cords
-        self.NORTH = Cords(*data["north"])
-        self.EAST = Cords(*data["east"])
-        self.SOUTH = Cords(*data["south"])
-        self.WEST = Cords(*data["west"])
-        self.OFFSET_ANGLE = north_angle
+    if degrees >= 338 or degrees <= 22:
+        return "N"
+    elif degrees >= 23 and degrees <= 67:
+        return "NE"
+    elif degrees >= 68 and degrees <= 112:
+        return "E"
+    elif degrees >= 113 and degrees <= 157:
+        return "SE"
+    elif degrees >= 158 and degrees <= 202:
+        return "S"
+    elif degrees >= 203 and degrees <= 247:
+        return "SW"
+    elif degrees >= 248 and degrees <= 292:
+        return "W"
+    elif degrees >= 293 and degrees <= 337:
+        return "NW"
+    else:
+        return "N/A"
