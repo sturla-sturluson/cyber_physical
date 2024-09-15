@@ -33,7 +33,9 @@ class X_Y_Map:
 
         self.map = np.zeros((dimensions,dimensions),dtype=int)
         # Create vertical Y axis and horizontal X axis
-        self._added_cords = [] # List of cords that have been added
+        # cords map key is x and value is y 
+        self._added_cords:list[tuple[int,int]] = []
+        self._added_cords_map:dict[int,dict[int,int]] = {}
         self._display_count = display_count # How many cords to display, -1 for all
 
         # for i in range(dimensions):
@@ -50,6 +52,9 @@ class X_Y_Map:
                 row_index = 180-max(min(int(y) + 90, 180), 0) 
                 col_index = max(min(int(x) + 90, 180), 0)
                 self.map[row_index,col_index] -= 1
+                self._added_cords_map[int(x)][int(y)] -= 1
+                if self._added_cords_map[int(x)][int(y)] == 0:
+                    del self._added_cords_map[int(x)][int(y)]
 
     def add_cord(self,x:int|float,y:int|float):
         """Adds a cord to the map"""
@@ -62,7 +67,12 @@ class X_Y_Map:
         # Column index is -90 = 0 and 90 = 180
         col_index = max(min(int(x) + 90, 180), 0)
         self.map[row_index,col_index] += 1
-        self._added_cords.append((x,y))
+        # Adding cords in a queue essentially
+        self._added_cords.append((int(x),int(y)))
+        self._added_cords_map.setdefault(int(x),{})[int(y)] = 0
+        # Then add the cords to the map
+        self._added_cords_map[int(x)][int(y)] += 1
+
         self._update_display_count()
 
     def _get_icon(self,count:int)->str:
@@ -85,23 +95,74 @@ class X_Y_Map:
         list_str.append("  ") # Adding space for right border
         return list_str
     
-    def get_scaled_map(self,scale:int = 1)->str:
-        """Returns a scaled map"""
+    def _get_count(self,scale:int,i:int,j:int)->int:
+        """Returns the count of cords"""
+        count = 0
+        for x in range(scale):
+            for y in range(scale):
+                count += self.map[i*scale+x,j*scale+y]
+        return count
+
+    def _has_cord(self,scale:int,i:int,j:int)->bool:
+        """Returns if there is a cord in the grid"""
+        for x in range(scale):
+            for y in range(scale):
+                if self.map[i*scale+x,j*scale+y] > 0:
+                    return True
+        return False
+    
+    def _grid_search(self,scaled_ratio:int,scale:int,fast:bool,str_map:list[list[str]])->None:
+        """Searches the entire grid looking for cords"""
+        for i in range(scaled_ratio-1):   
+            for j in range(scaled_ratio-1):
+                grid_count = 0
+                if(fast): # Fast we can stop iterating if one cord is found
+                    grid_count = int(self._has_cord(scale,i,j))
+                elif(not fast): # Slow we need to count all cords
+                    grid_count = self._get_count(scale,i,j)
+                if(grid_count > 0):
+                    str_map[i][j+1] = _get_color_string(self._get_icon(grid_count),"green")
+
+    def _dict_search(self,scaled_ratio:int,scale:int,fast:bool,str_map:list[list[str]])->None:
+        """Adding the cords that have been added"""
+        scale_count_dict = {}
+        for i in range(scaled_ratio-1):   
+            for j in range(scaled_ratio-1):
+                # First check if any i (x) cords have been added
+                # Example scale is 10:1 and i is 1 then check x's 10-19
+                for x in range(i*scale,(i+1)*scale):
+                    if x in self._added_cords_map:
+                        # Then check if any y cords have been added
+                        for y in range(j*scale,(j+1)*scale):
+                            if y in self._added_cords_map[x]:
+                                scale_count_dict[(i,j)] = scale_count_dict.get((i,j),0) + 1
+                                break
+        for scaled_x,scaled_y in scale_count_dict:
+            str_map[scaled_x][scaled_y+1] = _get_color_string(self._get_icon(scale_count_dict[(scaled_x,scaled_y)]),"green")
+
+
+    def get_scaled_map(self,scale:int = 1,fast:bool = True)->str:
+        """Returns a scaled map
+        Scale is a map scale 1:1 would be 180x180
+        1:10 would be 18x18
+        fast: If fast is true, it will only display if there is a cord, not the count
+        """
+        import time
+        timer = time.time()
+        print("Starting")
         scaled_ratio = (180//scale) + 1 # 1 for Axis and adding 2 for the borders
-        str_map = [[] for i in range(scaled_ratio)]
+        str_map:list[list[str]] = [[] for i in range(scaled_ratio)]
         for i in range(scaled_ratio):
             if(i == scaled_ratio//2):
                 str_map[i] = self._get_row_list(scaled_ratio,"X ","+ ")
             else:
                 str_map[i] = self._get_row_list(scaled_ratio)         
-        for i in range(scaled_ratio-1):   
-            for j in range(scaled_ratio-1):
-                grid_count = 0
-                for x in range(scale):
-                    for y in range(scale):
-                        grid_count += self.map[i*scale+x,j*scale+y]
-                if(grid_count > 0):
-                    str_map[i][j+1] = _get_color_string(self._get_icon(grid_count),"green")
+        generate_time = time.time()
+        print(f"Time Taken to generate: {(generate_time - timer) *1000:.2f}ms")
+        self._dict_search(scaled_ratio,scale,fast,str_map)
+
+        count_time = time.time()
+        print(f"\tTime Taken to count: {(count_time - generate_time) *1000:.2f}ms")
 
         # Settings NESW directions with N,E,S,W
         new_str_map = []
@@ -109,6 +170,7 @@ class X_Y_Map:
         new_str_map.append(self._get_row_list(scaled_ratio,"  ","  "))
         # adding the old map
         new_str_map.extend(str_map)
+        print(f"\tTime Taken to add old map: {(time.time() - count_time) *1000:.2f}ms")
         # Adding bottom border
         new_str_map.append(self._get_row_list(scaled_ratio,"  ","  "))
         # Adding the NESW directions
@@ -116,6 +178,7 @@ class X_Y_Map:
         new_str_map[scaled_ratio//2+1][-1] = _get_color_string("E ","red")
         new_str_map[-1][scaled_ratio//2 +1] = _get_color_string("S ","red")
         new_str_map[scaled_ratio//2+1][0] = _get_color_string("W ","red")
+        print(f"Total Time Taken: {(time.time() - timer) *1000:.2f}ms")
         return "\n".join(["".join(row) for row in new_str_map])
 
     def __str__(self) -> str:
@@ -159,10 +222,10 @@ def circle_test():
         print(map.get_scaled_map(10))
         print(f"Angle: {current_angle:.1f}")
         print(f"X: {x:.1f} Y: {y:.1f}")
-        #input()
         current_angle += random.randint(1,10)
         current_angle %= 360
-        time.sleep(0.2)
+        input()
+        #time.sleep(0.2)
 
 def main():
     circle_test()
