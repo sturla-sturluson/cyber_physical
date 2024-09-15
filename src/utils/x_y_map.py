@@ -1,6 +1,7 @@
 import numpy as np
 
 
+
 def _get_color_string(value:str,color:str)->str:
     """Colorizes a string"""
     if color == "red":
@@ -119,14 +120,12 @@ class X_Y_Map:
 
     def __str__(self) -> str:
         return self.get_scaled_map(1)
-    
 
-def main():
+def random_test():
     import random
     import os
     import time
     map = X_Y_Map(10)
-    map.add_cord(0,90)
     while True:
         os.system('clear')
         x = random.uniform(-90,90)
@@ -134,6 +133,42 @@ def main():
         map.add_cord(x,y)
         print(map.get_scaled_map(10))
         time.sleep(1)
+
+def circle_test():
+    import os
+    import random
+    import math
+    import time
+    def degrees_to_coordinates(angle_degrees: int) -> tuple[float, float]:
+        # Convert angle from degrees to radians, and reverse for clockwise
+        angle_degrees -= 90
+        angle_radians = math.radians(360 - angle_degrees)
+
+        # Calculate the x and y coordinates
+        x = 90 * math.cos(angle_radians)
+        y = 90 * math.sin(angle_radians)
+
+        return x, y
+    
+    map = X_Y_Map()
+    current_angle = 0
+    while True:
+        os.system('clear')
+        x,y = degrees_to_coordinates(int(current_angle))
+        map.add_cord(x,y)
+        print(map.get_scaled_map(10))
+        print(f"Angle: {current_angle:.1f}")
+        print(f"X: {x:.1f} Y: {y:.1f}")
+        #input()
+        current_angle += random.randint(1,10)
+        current_angle %= 360
+        time.sleep(0.2)
+
+def main():
+    circle_test()
+
+
+
 
 if __name__ == "__main__":
     main()

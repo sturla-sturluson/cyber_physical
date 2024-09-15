@@ -1,7 +1,8 @@
-from time import sleep
 import tkinter as tk
-from PIL import Image, ImageDraw, ImageFont, ImageTk
+from PIL import Image, ImageDraw, ImageFont
+import PIL.ImageTk as imgTk
 import math
+from time import sleep
 
 class OledScreenEmulator:
     def __init__(self, width=128, height=64):
@@ -26,9 +27,12 @@ class OledScreenEmulator:
         
     def _update(self):
         ''' Convert the pillow image to a tkinter image and reload it into the label '''
-        tk_image = ImageTk.PhotoImage(self._image)
-        self._label.config(image=tk_image)
-        self._label.image = tk_image
+        tk_image = imgTk.PhotoImage(self._image)
+        # 'Cast' it to a _ImageSpec 
+        self._label.configure(image=tk_image) # type: ignore
+
+        # Setting the image on the label
+        self._label.image = tk_image # type: ignore
 
     def __del__(self):
         ''' Small hack to keep the window open after the last show() call '''
@@ -56,15 +60,15 @@ class OledScreenEmulator:
         self._update()
 
 
+def main():
+    oled = OledScreenEmulator()
+    oled.clear()
+    oled.text(0, 0, "Hello, World!")
+    for i in range(128):
+        y = 32 + int(32 * math.sin(math.radians(i * 2 + i)))
+        oled.pixel(i, y, 255)
+        oled.show()
 
 
-
-oled = OledScreenEmulator()
-oled.clear()
-oled.text(0, 0, "Hello, World!")
-for i in range(128):
-    y = 32 + int(32 * math.sin(math.radians(i * 2 + i)))
-    oled.pixel(i, y, 255)
-    oled.show()
-
-
+if __name__ == "__main__":
+    main()

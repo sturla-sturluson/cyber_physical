@@ -15,7 +15,7 @@ def run_display_compass(oled_display:OledDisplay):
         print("run_display_compass")
         while True:
             system('clear')
-            degrees = magnetic_sensor.get_orientation()
+            degrees = magnetic_sensor.get_angle()
             nsew_string = magnetic_sensor.get_NSEW_string(degrees)
             oled_display.display_text(nsew_string)
             print(nsew_string)

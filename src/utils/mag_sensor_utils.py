@@ -79,22 +79,26 @@ def _generate_rotation_matrix(angle:int)->np.ndarray:
 
 
 def get_translation_function()->Callable[[int|float,int|float],tuple[int,int]]:
+    """Returns a function that translates the cordinates from the calibration data
+    You then plug in the x,y from the magnetometer and it will return the translated cordinates   
+    
+    """
     max_cords,min_cords,north_cords = _load_configs()
     translation_matrix = _generate_translation_matrix(min_cords,max_cords)
-    x_midpoint, y_midpoint = UTILS.get_midpoints(max_cords, min_cords)
+    x_midpoint, _ = UTILS.get_midpoints(max_cords, min_cords)
+    # Getting the angle from sensor north cords, and where the user wants north to be
     sensor_north = Cords(x_midpoint, max_cords.y)
     angle = UTILS.get_angle(north_cords,sensor_north)
     rotation_matrix = _generate_rotation_matrix((int(angle)))
 
     def translate(x:int|float,y:int|float)->tuple[int,int]:
         """Translates the cordinates from the calibration data"""
-        # Checking if the cordinates are within the calibration range
+        # Clamping the cords to the max and min cords, to ensure no fuckery happens
         x = max(min(x, int(max_cords.x)), int(min_cords.x))
         y = max(min(y, int(max_cords.y)), int(min_cords.y))
         cords = np.array([x,y,1])
         translated_cords = translation_matrix @ cords
         rotated_cords = rotation_matrix @ translated_cords[:2]
-        #return (int(translated_cords[0]),int(translated_cords[1]))
         return (int(rotated_cords[0]),int(rotated_cords[1]) )
     
     return translate
