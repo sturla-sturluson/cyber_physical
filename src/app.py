@@ -3,7 +3,7 @@ from .utils import get_current_time_string, get_ip_string, get_pressure_string, 
 from .display import OledDisplay
 import time
 import datetime as dt
-from .ui_funcs import run_slide_show,run_display_compass,run_slide_rgb_reader
+from .ui_funcs import run_slide_show,run_display_compass,run_slide_rgb_reader,run_range_sensor
 from .compass_calibrator import run_calibration
 
 
@@ -15,6 +15,7 @@ def app(
         compass:bool = False,
         rgb:bool = False,
         calibrate:bool = False,
+        range_sensor:bool = False,
         ):
     
 
@@ -28,6 +29,8 @@ def app(
             run_slide_rgb_reader(oled_display)
         elif(calibrate):
             run_calibration()
+        elif(range_sensor):
+            run_range_sensor()
         else:
             oled_display.display_text(get_ip_string())
             input("Press Enter to quit")

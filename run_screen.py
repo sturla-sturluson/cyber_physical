@@ -9,6 +9,8 @@ COMPASS_FLAG = "compass"
 COMPASS_CALIBRATION_FLAG = "calibrate"
 # --rgb : Display the RGB sensor
 RGB_FLAG = "rgb"
+# --range : Display the range sensor
+RANGE_FLAG = "range"
 
 
 
@@ -21,6 +23,7 @@ def main():
     parser.add_argument(f"--{COMPASS_FLAG}", action="store_true", help="Display the compass")
     parser.add_argument(f"--{COMPASS_CALIBRATION_FLAG}", action="store_true", help="Calibrate the compass")
     parser.add_argument(f"--{RGB_FLAG}", action="store_true", help="Display the RGB sensor")
+    parser.add_argument(f"--{RANGE_FLAG}", action="store_true", help="Display the range sensor")
     args = parser.parse_args()
     print(f"Args: {args}")
     if args.slide:
@@ -34,6 +37,8 @@ def main():
         app(calibrate=True)
     elif args.rgb:
         app(rgb=True)
+    elif args.range:
+        app(range_sensor=True)
     else:
         app(slide=slide, slide_time=slide_time)
 

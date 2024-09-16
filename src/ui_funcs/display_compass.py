@@ -9,15 +9,17 @@ from os import system
 
 def run_display_compass(oled_display:OledDisplay):
     magnetic_sensor = MagneticSensor()
-    led = Led(22)
+    led = Led(26)
     input("Press enter to start the compass")
     try:
         print("run_display_compass")
         while True:
             system('clear')
-            degrees = magnetic_sensor.get_angle()
-            nsew_string = magnetic_sensor.get_NSEW_string(degrees)
+            orientation, (x, y), nsew_string = magnetic_sensor.get_data()
+
             oled_display.display_text(nsew_string)
+            print(f"Orientation: {orientation}°")
+            print(f"X: {x} Y: {y}")
             print(nsew_string)
             if(nsew_string == "N"):
                 led.turn_on()

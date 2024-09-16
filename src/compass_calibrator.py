@@ -117,7 +117,7 @@ class CompassCalibrator:
     def _print_screen(self):
         os.system('clear')
         print("Compass Calibrator")
-        print(self.x_y_map.get_scaled_map(10))
+        print(self.x_y_map.get_scaled_map(5))
         print(f"{self.current_cord}")
         print(f"{self.max_cord}")
         print(f"{self.min_cord}")
@@ -128,7 +128,7 @@ class CompassCalibrator:
 
     async def _calibrate_loop(self):
         """Calibration loop that runs until the stop event is set."""
-        re_draw_interval = 0.5
+        re_draw_interval = 1
         last_draw_time = time.time()
         while not self._stop_event.is_set():
             x,y,_ = self.magnetic_sensor.get_x_y_z()

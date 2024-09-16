@@ -22,6 +22,26 @@ class RangeSensor:
     def get_raw_value(self):
         return self.chan0.value
     
+    def get_data(self) -> tuple[int,float]:
+        """Returns the raw value and the voltage
+        Returns:
+            tuple[int,float]: (raw value, voltage)
+        """
+        return self.chan0.value, self.chan0.voltage
+    
     def __str__(self) -> str:
         return f"Raw ADC Value: {self.chan0.value} ADC Voltage: {self.chan0.voltage:.2f}"
 
+
+
+def remap_range(value: int, left_min: int, left_max: int, right_min: int, right_max: int) -> int:
+    # this remaps a value from original (left) range to new (right) range
+    # Figure out how 'wide' each range is
+    left_span = left_max - left_min
+    right_span = right_max - right_min
+
+    # Convert the left range into a 0-1 range (int)
+    valueScaled = int(value - left_min) / int(left_span)
+
+    # Convert the 0-1 range into a value in the right range.
+    return int(right_min + (valueScaled * right_span))
