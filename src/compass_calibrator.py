@@ -1,19 +1,14 @@
 import board
-import math
-import numpy as np
 import time
-from typing import Protocol
 import random
 import os
 import asyncio
 import threading
 import json
 from pathlib import Path
-import pprint
 from adafruit_lsm303dlh_mag import LSM303DLH_Mag
 import busio
-from .utils import X_Y_Map
-from .utils import degrees_to_coordinates,get_NSEW_string
+from .utils import X_Y_Map, degrees_to_coordinates, get_NSEW_string
 
 
 CONFIG_DIR = "~/.config/cyber_physical_systems"
