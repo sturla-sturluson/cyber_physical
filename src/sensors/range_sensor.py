@@ -45,3 +45,13 @@ def remap_range(value: int, left_min: int, left_max: int, right_min: int, right_
 
     # Convert the 0-1 range into a value in the right range.
     return int(right_min + (valueScaled * right_span))
+
+
+def get_distance_calc(k:float,voltage:float) -> float:
+    """
+        1/D = k*V
+    """
+    if(voltage == 0):
+        return 0.0001   # to avoid division by zero
+    distance = 1 / (k * voltage)
+    return distance
