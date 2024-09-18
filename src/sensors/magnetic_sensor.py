@@ -35,6 +35,13 @@ class MagneticSensor(IMagneticSensor):
         # Get the orientation in compass degrees
         orientation = UTILS.calculate_orientation(x, y)
         return orientation, (x, y), self.get_NSEW_string(orientation)
+    
+    def get_non_translate_data(self)->tuple[int,tuple[int,int],str]:
+        """Returns a tuple of (Angle,(X,Y),"NESW string", unmodified x,y)"""
+        x, y, _ = self.get_x_y_z()
+        # Get the orientation in compass degrees
+        orientation = UTILS.calculate_orientation(x, y)
+        return orientation, (round(x), round(y)), self.get_NSEW_string(orientation)
 
     @classmethod
     def get_NSEW_string(cls,degrees:int)->str:

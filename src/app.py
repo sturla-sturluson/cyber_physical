@@ -3,8 +3,14 @@ from .utils import get_current_time_string, get_ip_string, get_pressure_string, 
 from .display import OledDisplay
 import time
 import datetime as dt
-from .ui_funcs import run_slide_show,run_display_compass,run_slide_rgb_reader,run_range_sensor
-from .compass_calibrator import run_calibration
+from .ui_funcs import (
+    run_slide_show,
+    run_display_compass,
+    run_slide_rgb_reader,
+    run_display_range_sensor,
+    run_compass_calibration,
+    run_range_sensor_calibration)
+
 
 
 
@@ -24,13 +30,17 @@ def app(
         if(slide):
             run_slide_show(oled_display,slide_time)
         elif(compass):
-            run_display_compass(oled_display)
+            if(calibrate):
+                run_compass_calibration()
+            else:
+                run_display_compass(oled_display)
         elif(rgb):
             run_slide_rgb_reader(oled_display)
-        elif(calibrate):
-            run_calibration()
         elif(range_sensor):
-            run_range_sensor()
+            if(calibrate):
+                run_range_sensor_calibration()
+            else:
+                run_display_range_sensor(oled_display)
         else:
             oled_display.display_text(get_ip_string())
             input("Press Enter to quit")
