@@ -1,23 +1,18 @@
 import board
-import math
-import numpy as np
 import time
-from typing import Protocol
 import random
 import os
 import asyncio
 import threading
 import json
 from pathlib import Path
-import pprint
 from adafruit_lsm303dlh_mag import LSM303DLH_Mag
 import busio
-from .utils import X_Y_Map
-from .utils import degrees_to_coordinates,get_NSEW_string
+from ..utils import X_Y_Map , degrees_to_coordinates,get_NSEW_string
+from ..constants import CONFIG_DIR, CALIBRATION_FILE_PATH
 
 
-CONFIG_DIR = "~/.config/cyber_physical_systems"
-FILE_NAME = "compass_calibration.json"
+
 
 
 
@@ -85,8 +80,8 @@ class Cords:
 
 
 class CompassCalibrator:
-    def __init__(self, magnetic_sensor:MagneticSensor) -> None:
-        self.magnetic_sensor = magnetic_sensor
+    def __init__(self) -> None:
+        self.magnetic_sensor = MagneticSensor()
         self.current_cord = Cords(name="Current X/Y")
         self.max_cord = Cords(name="MAX X/Y")
         self.min_cord = Cords(name="MIN X/Y")
@@ -185,7 +180,7 @@ class CompassCalibrator:
         Path(CONFIG_DIR).expanduser().mkdir(parents=True, exist_ok=True)
         dir_path = Path(CONFIG_DIR).expanduser()
 
-        file_path = dir_path / FILE_NAME
+        file_path = dir_path / CALIBRATION_FILE_PATH
         with open(file_path, "w") as file:
             json.dump(data, file, indent=4)
         ## Save the 1:1 map
@@ -200,11 +195,5 @@ class CompassCalibrator:
             print(f"Grid map saved to {file_path_map}")
 
 
-
-
-def run_calibration():
-    # compass_calibrator = CompassCalibrator(FakeMagneticSensor())
-    compass_calibrator = CompassCalibrator(MagneticSensor())
-    asyncio.run(compass_calibrator.calibrate())
 
 

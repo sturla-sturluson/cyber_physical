@@ -1,12 +1,9 @@
-import os
-import time
 import busio
 import digitalio
 import board
 import adafruit_mcp3xxx.mcp3008 as MCP
 from adafruit_mcp3xxx.analog_in import AnalogIn
 from .. import utils as UTILS
-# from adafruit_ssd1306 import SSD1306_I2C
 
 class RangeSensor:
     def __init__(self,gpio_pin_number = 5):
@@ -22,12 +19,13 @@ class RangeSensor:
     def get_raw_value(self):
         return self.chan0.value
     
-    def get_data(self) -> tuple[int,float]:
-        """Returns the raw value and the voltage
+    def get_data(self) -> tuple[int,float,int]:
+        """Returns the raw value and the voltage, and estimated distance in cm.
         Returns:
             tuple[int,float]: (raw value, voltage)
         """
-        return self.chan0.value, self.chan0.voltage
+        # TODO implement the distance calculation
+        return self.chan0.value, self.chan0.voltage , -1
     
     def __str__(self) -> str:
         return f"Raw ADC Value: {self.chan0.value} ADC Voltage: {self.chan0.voltage:.2f}"

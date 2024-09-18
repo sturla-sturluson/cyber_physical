@@ -23,49 +23,59 @@ class X_Y_Map:
     from -90 to 90 degrees
     cord (52,32) would be added map[142,122]
     All of them will be 0, if a cord is added it will be 1
+    Args:
+        display_count (int, optional): How many cords to keep on the map, -1 for all. Defaults to -1.
     """
 
-
+    PRIORITY_COLORS = ["green","blue","yellow"]
 
     def __init__(self,display_count:int = -1) -> None:
-        # Scale is the number of degrees per grid
-        # 1 would be 180x180 add 1 for the axis
-        dimensions = 180 + 1
+        self.cords_queue_primary:Queue[tuple[int,int]] = Queue()
+        self.cords_map_primary:dict[int,dict[int,int]] = {}
 
-        #self.map = np.zeros((dimensions,dimensions),dtype=int)
-        # Create vertical Y axis and horizontal X axis
-        # cords map key is x and value is y 
-        self.cords_queue:Queue[tuple[int,int]] = Queue()
-        self.cords_map:dict[int,dict[int,int]] = {}
+        self.cords_queue_secondary:Queue[tuple[int,int]] = Queue()
+        self.cords_map_secondary:dict[int,dict[int,int]] = {}
+
+        self.cords_queue_tertiary:Queue[tuple[int,int]] = Queue()
+        self.cords_map_tertiary:dict[int,dict[int,int]] = {}
+
+        self._cords_queues = [
+            self.cords_queue_primary,
+            self.cords_queue_secondary,
+            self.cords_queue_tertiary
+        ]
+
+        self._cords_maps = [
+            self.cords_map_primary,
+            self.cords_map_secondary,
+            self.cords_map_tertiary
+
+        ]
+        
         self._display_count = display_count # How many cords to display, -1 for all
 
-        # for i in range(dimensions):
-        #     self.map[dimensions//2,i] = -1
-        #     self.map[i,dimensions//2] = -1
-
-    def add_cord(self,x:int|float,y:int|float):
-        """Adds a cord to the map"""
-        # If the cord is for example (0,90), which is north
-        # Start by finding the row index
-        # The row is gonna be the y value. -90 would be row 180
-        # We add 90 but subtract it from 180 to get the correct row index
-        # Using a min max clamp to make sure the value is within the range
-        self.cords_map.setdefault(int(x),dict()) # Adding the x key
-        self.cords_map[int(x)].setdefault(int(y),0) # Adding the y key
-        self.cords_map[int(x)][int(y)] += 1
-        self.cords_queue.put((int(x),int(y)))
+    def add_cord(self,x:int|float,y:int|float, cords_priority:int = 1)->None:
+        """Adds a cord to the map
+            cords_priority is what type of cord you are adding 
+            1 for primary, 2 for secondary, 3 for tertiary
+        """
+        map_to_use = self._cords_maps[cords_priority-1]
+        queue_to_use = self._cords_queues[cords_priority-1]
+        
+        map_to_use.setdefault(int(x),dict()) # Adding the x key
+        map_to_use[int(x)].setdefault(int(y),0) # Adding the y key
+        map_to_use[int(x)][int(y)] += 1
+        queue_to_use.put((int(x),int(y)))
         if(self._display_count == -1):
             return
-
-        if self.cords_queue.qsize() > self._display_count:
-            x,y = self.cords_queue.get()
-            self.cords_map[x][y] -= 1
-            if self.cords_map[x][y] == 0:
-                del self.cords_map[x][y]
-                if len(self.cords_map[x]) == 0:
-                    del self.cords_map[x]
-        
-
+        # If we are only keeping track of the latest N cords, we need to clean up
+        if queue_to_use.qsize() > self._display_count:
+            x,y = queue_to_use.get()
+            map_to_use[x][y] -= 1
+            if map_to_use[x][y] == 0:
+                del map_to_use[x][y]
+                if len(map_to_use[x]) == 0:
+                    del map_to_use[x]    
 
     def _get_icon(self,count:int)->str:
         """Gets correctly formatted number"""
@@ -87,24 +97,29 @@ class X_Y_Map:
         list_str.append(" |")
         return list_str
     
-    def _get_count(self,scaled_x:int,scaled_y:int,scale:int)->int:
+    def _get_count(self,scaled_x:int,scaled_y:int,scale:int,cords_priority:int = 1
+                   )->int:
         """Gets the count for a specific cord"""
+        map_to_use = self._cords_maps[cords_priority-1]
         x = (scaled_x - 1) * scale
         y = (scaled_y - 1) * scale
         count = 0
         for i in range(scale):
             for j in range(scale):
-                count += self.cords_map.get(x+i,{}).get(y+j,0)
+                count += map_to_use.get(x+i,{}).get(y+j,0)
         return count
 
-    def _dict_search(self,scale:int,str_map:list[list[str]])->None:
+    def _dict_search(self,scale:int,str_map:list[list[str]],cords_priority:int = 1)->None:
         """Adding the cords that have been added"""
         scaled_map:dict[int,dict[int,int]] = {}
-        x_cords = list(self.cords_map.keys()) # All the x cords that have been added
+        map_to_use = self._cords_maps[cords_priority-1]
+        color_to_use = self.PRIORITY_COLORS[cords_priority-1]
+
+        x_cords = list(map_to_use.keys()) # All the x cords that have been added
         for x in x_cords:
             scaled_x = x//scale
             scaled_map.setdefault(scaled_x,{})
-            y_cords = list(self.cords_map[x].keys())
+            y_cords = list(map_to_use[x].keys())
             for y in y_cords:
                 scaled_y = y//scale
                 scaled_map[scaled_x].setdefault(scaled_y,0)
@@ -131,13 +146,7 @@ class X_Y_Map:
                 # Just making sure that min index is always from 1 to grid_length-2
                 grid_x = max(min(grid_x,grid_length-1),0)
                 grid_y = max(min(grid_y,grid_length-1),0)
-                str_map[grid_x][grid_y+1] = _get_color_string(self._get_icon(count),"green")
-
-                
-            
-
-    
-
+                str_map[grid_x][grid_y+1] = _get_color_string(self._get_icon(count),color_to_use)
 
     def get_scaled_map(self,scale:int = 1)->str:
         """Returns a scaled map
@@ -160,12 +169,11 @@ class X_Y_Map:
                 str_map[i] = self._get_row_list(scaled_ratio,"X ","+ ")
             else:
                 str_map[i] = self._get_row_list(scaled_ratio)         
-        generate_time = time.time()
-        print(f"Time Taken to generate: {(generate_time - timer) *1000:.2f}ms")
+
+        self._dict_search(scale,str_map,3)
+        self._dict_search(scale,str_map,2)
         self._dict_search(scale,str_map)
 
-        count_time = time.time()
-        print(f"\tTime Taken to count: {(count_time - generate_time) *1000:.2f}ms")
 
         # Settings NESW directions with N,E,S,W
         new_str_map = []
@@ -173,7 +181,7 @@ class X_Y_Map:
         new_str_map.append(self._get_row_list(scaled_ratio,"  ","  "))
         # adding the old map
         new_str_map.extend(str_map)
-        print(f"\tTime Taken to add old map: {(time.time() - count_time) *1000:.2f}ms")
+
         # Adding bottom border
         new_str_map.append(self._get_row_list(scaled_ratio,"  ","  "))
         # Adding the NESW directions
@@ -227,7 +235,11 @@ def circle_test():
         os.system('clear')
         x,y = degrees_to_coordinates(int(current_angle))
         map.add_cord(x,y)
-        print(map.get_scaled_map(1))
+        x_2 = random.uniform(-90,90)
+        y_y = random.uniform(-90,90)
+        map.add_cord(x,y)
+        map.add_cord(x_2,y_y,2)
+        print(map.get_scaled_map(10))
         print(f"Angle: {current_angle:.1f}")
         print(f"X: {x:.1f} Y: {y:.1f}")
         current_angle += random.randint(1,10)
