@@ -8,9 +8,7 @@ import json
 from pathlib import Path
 from adafruit_lsm303dlh_mag import LSM303DLH_Mag
 import busio
-from ..utils import X_Y_Map , degrees_to_coordinates,get_NSEW_string
-from ..constants import CONFIG_DIR, CALIBRATION_FILE_PATH
-
+from .utils import X_Y_Map, degrees_to_coordinates, get_NSEW_string
 
 
 
