@@ -13,7 +13,7 @@ class RangeSensor:
         mcp = MCP.MCP3008(spi, cs)
         self.chan0 = AnalogIn(mcp, MCP.P0)
 
-    def get_distance(self):
+    def get_voltage(self):
         return self.chan0.voltage
     
     def get_raw_value(self):

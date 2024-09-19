@@ -6,5 +6,5 @@ After=network-online.target
 Type=simple
 User=sturla22
 WorkingDirectory=/home/sturla22
-ExecStart=/home/sturla22/cpsy/bin/python3 /run_screen/run_screen.py
+ExecStart=/home/sturla22/cpsy/bin/python3 /run_screen/run_screen.py -slide -ip
 Restart=never

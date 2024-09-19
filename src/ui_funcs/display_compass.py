@@ -10,9 +10,7 @@ def run_display_compass(oled_display:OledDisplay):
     magnetic_sensor = MagneticSensor()
     led = Led(26)
     x_y_map = X_Y_Map(15)
-    input("Press enter to start the compass")
     try:
-        print("run_display_compass")
         while True:
             system('clear')
             orientation, (x, y), nsew_string = magnetic_sensor.get_data()

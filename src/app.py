@@ -17,6 +17,7 @@ from .ui_funcs import (
 
 def app(
         slide:bool = False,
+        ip:bool = False,
         slide_time:int = 4,
         compass:bool = False,
         rgb:bool = False,
@@ -24,11 +25,10 @@ def app(
         range_sensor:bool = False,
         ):
     
-
-    oled_display = OledDisplay()
-    try:
+    # Using 'with' will automatically clean up the resources when the block is done
+    with OledDisplay() as oled_display:
         if(slide):
-            run_slide_show(oled_display,slide_time)
+            run_slide_show(oled_display,slide_time,ip)
         elif(compass):
             if(calibrate):
                 run_compass_calibration()
@@ -45,15 +45,6 @@ def app(
             oled_display.display_text(get_ip_string())
             input("Press Enter to quit")
 
-    except KeyboardInterrupt:
-        oled_display.clear()
-        oled_display.cleanup()
-    except Exception as e:
-        print(e)
-        oled_display.display_text("Error")
-    finally:
-        oled_display.cleanup()
-        print("Done")
 
 
 

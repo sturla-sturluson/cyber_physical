@@ -1,5 +1,6 @@
 from ..models import Cords
 import math
+import numpy as np
 
 def get_dot_product(cord1:Cords,cord2:Cords):
     """Returns the dot product of two cords
@@ -77,3 +78,28 @@ def get_midpoints(max_cords:Cords,min_cords:Cords):
     x_midpoint = (max_cords.x + min_cords.x) / 2
     y_midpoint = (max_cords.y + min_cords.y) / 2
     return x_midpoint, y_midpoint
+
+
+def get_robust_scaling(array:np.ndarray) -> np.ndarray:
+    """Returns the robust scaling of the array
+    Args:
+        array (np.array): The array to scale
+    Returns:
+        np.array: The scaled array
+    """
+    median = np.median(array)
+    quartile_1 = np.percentile(array, 25)
+    quartile_3 = np.percentile(array, 75)
+    iqr = quartile_3 - quartile_1
+    array = (array - median) / iqr
+    return array
+
+def get_robust_avg(array:np.ndarray) -> float:
+    """Returns the robust average of the array
+    Args:
+        array (np.array): The array to average
+    Returns:
+        float: The average of the array
+    """
+    array = get_robust_scaling(array)
+    return float(np.mean(array))

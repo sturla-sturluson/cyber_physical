@@ -3,8 +3,9 @@ import digitalio
 from adafruit_ssd1306 import SSD1306_I2C
 import busio
 import os
-from PIL import Image, ImageFont
-from PIL import ImageDraw as ImageDrawModule
+from PIL import Image as imageModule
+from PIL import ImageFont as imageFontModule
+from PIL import ImageDraw as imageDrawModule
 from PIL.ImageDraw import ImageDraw
 
 # Lock so only one process can write to the display at a time
@@ -24,7 +25,7 @@ class OledDisplay:
         try:    
             self.border = borderWidth
             self.screen_dim = (self.WIDTH, self.HEIGHT)
-            self.font = ImageFont.load_default()
+            self.font = imageFontModule.load_default()
             self.i2c = busio.I2C(board.SCL, board.SDA)
         except Exception as e:
             print(e)
@@ -37,14 +38,21 @@ class OledDisplay:
         # Create the SSD1306 OLED class.
         self.oled = SSD1306_I2C(self.WIDTH, self.HEIGHT, self.i2c, addr=0x3c, reset=self.oled_reset)
 
+    def display_image(self,image:imageModule.Image):
+        """Displays an image on the OLED display
+            Displays ERROR if the image is not 128x64
+        """
+        self.oled.image(image)
+        self.oled.show()
+
     def display_text(self,text:str):
         """Draws the text on the OLED display"""
-        image = Image.new("1", self.screen_dim)
-        draw = ImageDrawModule.Draw(image) 
+        display_image = imageModule.new("1", self.screen_dim)
+        draw = imageDrawModule.Draw(display_image) 
         self._draw_screen_border(draw)
         self._draw_text(draw,text)
         # Display image
-        self.oled.image(image)
+        self.oled.image(display_image)
         self.oled.show()
 
     def clear(self):
@@ -61,6 +69,19 @@ class OledDisplay:
         self.i2c.deinit()
         self._remove_lock()
         print("OLED display cleaned up")
+
+    # Used for the 'with' statement
+    def __enter__(self):
+        """Returns the OLED display object"""
+        return self
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Code to run when the class goes out of scope (like a deconstructor)
+        print("Exiting OLED display, cleaning up")
+        self.cleanup()
+        if exc_type:
+            print(f"Exception: {exc_type} {exc_value}")
+        return True  # Optionally suppress exceptions
 
     def _draw_text(self,draw:ImageDraw,text:str):
         """Draws the text on the OLED display"""

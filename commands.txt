@@ -6,7 +6,7 @@ systemctl enable run_screen.service
 systemctl start run_screen.service
 systemctl stop run_screen.service
 
-sudo nano etc/systemd/system/run_screen.service
+sudo nano /etc/systemd/system/run_screen.service
 
 
 source cpsy/bin/activate

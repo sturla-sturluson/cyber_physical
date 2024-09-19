@@ -1,4 +1,4 @@
-from ..constants import CALIBRATION_FILE_PATH
+from ..constants import COMPASS_CALIBRATION_FILE_PATH
 from .. import utils as UTILS
 from ..models import Cords
 import json
@@ -27,7 +27,7 @@ def _get_cords(data:list[float])->Cords:
 def _load_configs():
     try:
         # Check if the calibration file exists            
-        with open(CALIBRATION_FILE_PATH, "r") as f:
+        with open(COMPASS_CALIBRATION_FILE_PATH, "r") as f:
             data = json.load(f)
             # Format json to a dictionary
             data = dict(data)
