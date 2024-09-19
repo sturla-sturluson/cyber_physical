@@ -74,5 +74,5 @@ class RangeSensorCalibrator:
 
 
     async def calibrate(self):
-            threading.Thread(target=self._input_thread).start()
-            await self.calibrate_loop()
+        threading.Thread(target=self._input_thread).start()
+        await self.calibrate_loop()

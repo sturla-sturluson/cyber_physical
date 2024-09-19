@@ -80,18 +80,19 @@ def get_midpoints(max_cords:Cords,min_cords:Cords):
     return x_midpoint, y_midpoint
 
 
-def get_robust_scaling(array:np.ndarray) -> np.ndarray:
-    """Returns the robust scaling of the array
+def get_removed_outliers(array:np.ndarray) -> np.ndarray:
+    """Returns the array with the outliers removed
     Args:
-        array (np.array): The array to scale
+        array (np.array): The array to remove outliers from
     Returns:
-        np.array: The scaled array
+        np.array: The array with the outliers removed
     """
-    median = np.median(array)
     quartile_1 = np.percentile(array, 25)
     quartile_3 = np.percentile(array, 75)
     iqr = quartile_3 - quartile_1
-    array = (array - median) / iqr
+    lower_bound = quartile_1 - (1.5 * iqr)
+    upper_bound = quartile_3 + (1.5 * iqr)
+    array = array[(array > lower_bound) & (array < upper_bound)]
     return array
 
 def get_robust_avg(array:np.ndarray) -> float:
@@ -101,5 +102,5 @@ def get_robust_avg(array:np.ndarray) -> float:
     Returns:
         float: The average of the array
     """
-    array = get_robust_scaling(array)
+    array = get_removed_outliers(array)
     return float(np.mean(array))

@@ -24,7 +24,7 @@ def app(
         calibrate:bool = False,
         range_sensor:bool = False,
         ):
-    
+
     # Using 'with' will automatically clean up the resources when the block is done
     with OledDisplay() as oled_display:
         if(slide):
@@ -44,7 +44,6 @@ def app(
         else:
             oled_display.display_text(get_ip_string())
             input("Press Enter to quit")
-
 
 
 

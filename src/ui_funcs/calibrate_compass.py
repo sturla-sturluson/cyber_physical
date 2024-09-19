@@ -1,8 +1,5 @@
-
 from ..calibrators  import CompassCalibrator
 import asyncio
-
-
 
 def run_compass_calibration():
     # compass_calibrator = CompassCalibrator(FakeMagneticSensor())

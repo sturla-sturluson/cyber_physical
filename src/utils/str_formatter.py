@@ -1,6 +1,7 @@
 # use future imports to avoid circular imports
 from __future__ import annotations
 from src.sensors.mpl_sensor import MplSensor
+from ..interfaces import IMagneticSensor
 
 
 
@@ -31,3 +32,7 @@ def get_temperature_string(mpl_sensor:MplSensor):
 def get_altitude_string(mpl_sensor:MplSensor):
     altitude = mpl_sensor.get_altitude()
     return f"Altitude\n{altitude:.1f}m"
+
+def get_compass_string(magnetic_sensor:IMagneticSensor):
+    angle,_,nesw = magnetic_sensor.get_data()
+    return f"Compass Angle\n{angle:.1f}°\n{nesw}"
