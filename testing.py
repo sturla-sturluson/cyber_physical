@@ -1,28 +1,19 @@
 import math
+import time
 
-def calculate_orientation(x: int | float, y: int | float) -> int:
-    """Takes in x and y coordinates and returns the orientation in degrees.
-    X and Y range from -90 to 90.
-    0,90 -> 0  # North
-    90,0 -> 90  # East
-    0,-90 -> 180  # South
-    -90,0 -> 270  # West
-    """
-    angle_degrees = math.degrees(math.atan2(y, x))   
-    adjusted_angle = 90 - angle_degrees # Adjust the angle to match the orientation
-    # Clamp the angle to 0-360
-    if adjusted_angle < 0:
-        adjusted_angle += 360
-    return int(round(adjusted_angle))
+def volt_to_cm(voltage:float):
+    return 46.371 * voltage**6 - 462.87 * voltage**5 + 1878.4 * voltage**4 - 3975.3 * voltage**3 + 4655.9 * voltage**2 - 2916.3 * voltage + 828.41
 
 
 
 def main():
+    voltage = 2.5
     while True:
-        x,y = input().split()
-        x = int(x)
-        y = int(y)
-        print(calculate_orientation(x,y))
+        voltage -= 0.1
+        print("Voltage " + str(voltage))
+        print(volt_to_cm(voltage))
+        time.sleep(1)
+
 
 
 if __name__ == "__main__":

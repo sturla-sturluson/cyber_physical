@@ -50,27 +50,8 @@ class RangeSensor:
             voltage = UTILS.get_robust_avg(voltage_arr_measurements)
             # Start by finding the index in the voltage array the first one smaller than the current voltage
             index = 0
-            for i in range(len(self.VOLTAGE_ARR)):
-                if self.VOLTAGE_ARR[i] < voltage:
-                    index = i
-                    break
-            # Now we have the index we can calculate the distance
-            if index > len(DISTANCES) - 1:
-                return -1
-            if index == len(DISTANCES) - 1:
-                return DISTANCES[-1]
-            # Calculate the distance between the two points
-            voltage1 = self.VOLTAGE_ARR[index]
-            voltage2 = self.VOLTAGE_ARR[index + 1]
-            distance1 = DISTANCES[index]
-            distance2 = DISTANCES[index + 1]
-            # Calculate the slope
-            m = (distance2 - distance1) / (voltage2 - voltage1)
-            # Calculate the y intercept
-            b = distance1 - m * voltage1
-            # Calculate the distance
-            distance = m * voltage + b
-            return int(distance)
+            return int(volt_to_cm(voltage))
+        
         except RuntimeWarning as e:
             print(e)
             return -1
@@ -91,37 +72,5 @@ class RangeSensor:
 
 
 
-def remap_range(value: int, left_min: int, left_max: int, right_min: int, right_max: int) -> int:
-    # this remaps a value from original (left) range to new (right) range
-    # Figure out how 'wide' each range is
-    left_span = left_max - left_min
-    right_span = right_max - right_min
-
-    # Convert the left range into a 0-1 range (int)
-    valueScaled = int(value - left_min) / int(left_span)
-
-    # Convert the 0-1 range into a value in the right range.
-    return int(right_min + (valueScaled * right_span))
-
-
-def get_distance_calc(k:float,voltage:float) -> float:
-    """
-        1/D = k*V
-    """
-    if(voltage == 0):
-        return 0.0001   # to avoid division by zero
-    distance = 1 / (k * voltage)
-    return distance
-
-
-def distance(voltage:float) -> float:
-    runningTotal = 0
-    avgFactor = 30
-    for x in range(avgFactor):
-        v = (voltage / 1023.0) * 5.0
-        distance1 = (16.2537 * v**4 - 129.893 * v**3 + 382.268 * v**2 - 512.611 * v + 301.439)
-        runningTotal = runningTotal + distance1
-    else:
-        distance = (runningTotal / avgFactor)
-
-    return distance
+def volt_to_cm(voltage:float):
+    return 46.371 * voltage**6 - 462.87 * voltage**5 + 1878.4 * voltage**4 - 3975.3 * voltage**3 + 4655.9 * voltage**2 - 2916.3 * voltage + 828.41
