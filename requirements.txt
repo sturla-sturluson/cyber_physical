@@ -5,6 +5,7 @@ adafruit-circuitpython-framebuf==1.6.5
 adafruit-circuitpython-l3gd20==2.3.19
 adafruit-circuitpython-lsm303-accel==1.1.21
 adafruit-circuitpython-lsm303dlh-mag==1.1.21
+adafruit-circuitpython-mcp3xxx==1.4.17
 adafruit-circuitpython-mpl3115a2==3.0.3
 adafruit-circuitpython-register==1.9.18
 adafruit-circuitpython-requests==4.1.6
