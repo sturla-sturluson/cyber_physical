@@ -114,7 +114,10 @@ def print_out_python_formatted_poly(coefficients:np.ndarray):
         equation_string += f"{coefficients[i]:.2f} * voltage**{len(coefficients)-i-1} + "
     print(equation_string.rstrip(" + "))
 
-def generate_coefficients_equation(degree:int,y_rr:np.ndarray,x:np.ndarray) -> np.ndarray:
+# Creating compound typehint for the function
+
+
+def generate_coefficients_equation(degree:int,y_rr:np.ndarray|list[float]|list[int],x:np.ndarray|list[float]|list[int]) -> np.ndarray:
     """Generates the coefficients for a polynomial equation
     Args:
         degree (int): The degree of the polynomial
@@ -128,23 +131,20 @@ def generate_coefficients_equation(degree:int,y_rr:np.ndarray,x:np.ndarray) -> n
         x = np.array([4,3,2,5,0])
         generate_coefficients_equation(degree,y_rr,x)
         Output:
-        array([-0.25,  1.75, -3.  ,  1.5 ,  1.  ])
+        array([
+        -5.36784506e-09             
+         4.00801473e-07        
+         3.02151621e-04        
+        -5.57442814e-02        
+         3.28273748e+00  
+        ])
     """
     coefficients =  np.polyfit(y_rr,x,degree)
     return coefficients
 
-def volt_to_cm_poly(voltage:float,coefficients:np.ndarray):
+def volt_to_cm_poly(voltage:float,coefficients:np.ndarray)->float:
     cm = 0
     for i in range(len(coefficients)):
         cm += coefficients[i] * voltage**(len(coefficients)-i-1)
-    return cm
+    return float(cm)
 
-
-def main():
-    test_coeffs = generate_coefficients_equation(6,np.array([1,2,3,4,5]),np.array([4,3,2,5,0]))
-    print(test_coeffs)
-    print_out_python_formatted_poly(test_coeffs )
-
-
-if __name__ == '__main__':
-    main()

@@ -1,7 +1,7 @@
 from ..display import OledDisplay
 from ..sensors import MplSensor, RangeSensor,MagneticSensor,RgbSensor
 from ..led import Led
-from ..utils import get_current_time_string,get_compass_string, get_ip_string, get_pressure_string, get_temperature_string, get_altitude_string
+from ..utils import get_current_time_string,get_range_sensor_string,get_compass_string, get_ip_string, get_pressure_string, get_temperature_string, get_altitude_string
 import time
 import datetime as dt
 from typing import Callable
@@ -37,22 +37,25 @@ class UserPromptSlides:
         self._update_ui_event = asyncio.Event()
 
 
-    async def _user_prompt_slides_loop(self):
+    async def _compass_north_loop(self):
         while not self.stop_event.is_set():
-            os.system('clear')
-            current_text = self.display_order[self.count % len(self.display_order)]()
             current_nsew = self.magnetic_sensor.get_data()[2]
             if(current_nsew == "N"):
                 self.led.turn_on()
             else:
-                self.led.turn_off()
+                self.led.turn_off()           
+            await asyncio.sleep(0.10)
+
+    async def _user_prompt_slides_loop(self):
+        while not self.stop_event.is_set():
+            os.system('clear')
+            current_text = self.display_order[self.count % len(self.display_order)]()
             self.oled_display.display_text(current_text)
             print(f"Slide {self.count+1}/{len(self.display_order)}")
             print(f"Slide Name: {self.display_names[self.count % len(self.display_names)]}")
             print(f"{current_text}")
             print("Press Enter to go to the next slide")
-            
-            await asyncio.sleep(0.25)
+            await asyncio.sleep(0.50)
 
     def _input_thread(self):
         while True:
@@ -63,7 +66,16 @@ class UserPromptSlides:
 
     async def user_prompt_slides(self):
         threading.Thread(target=self._input_thread).start()
+        # Start compass thread
+        compass_north_task = asyncio.create_task(self._compass_north_loop())
+        # Start user prompt slides loop        
         await self._user_prompt_slides_loop()
+        # Stop compass thread
+        compass_north_task.cancel()
+        self.stop_event.set()
+        self.led.turn_off()
+
+
 
         
 
@@ -82,7 +94,7 @@ def run_slide_show(oled_display:OledDisplay,slide_time:int,ip:bool):
         lambda : get_pressure_string(mpl_sensor),
         lambda : get_temperature_string(mpl_sensor),
         lambda : get_altitude_string(mpl_sensor),   
-        lambda : f"Range Sensor\n{range_sensor.get_cm_distance()}cm",
+        lambda : get_range_sensor_string(range_sensor),
         lambda : get_compass_string(magnetic_sensor),       
         lambda : f"RGB Sensor\n{rgb_sensor.get_rgb()}\n{rgb_sensor.get_color_name()}"
         ]

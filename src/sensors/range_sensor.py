@@ -21,6 +21,7 @@ class RangeSensor:
         mcp = MCP.MCP3008(spi, cs)
         self.chan0 = AnalogIn(mcp, MCP.P0)
         self._load_calibration()
+        self.coefficients = UTILS.generate_coefficients_equation(6,self.VOLTAGE_ARR,DISTANCES)
 
     def _load_calibration(self):
         try:
@@ -41,16 +42,16 @@ class RangeSensor:
     
     def get_raw_value(self):
         return self.chan0.value
-    def get_cm_distance(self)->int:
+    def get_cm_distance(self)->float:
         try:
             #TODO FIx crashing when its too fucking far from sensor
             voltage_arr_measurements = np.ndarray([])
             for i in range(50):
                 voltage_arr_measurements = np.append(voltage_arr_measurements,self.get_voltage())
             voltage = UTILS.get_robust_avg(voltage_arr_measurements)
-            # Start by finding the index in the voltage array the first one smaller than the current voltage
-            index = 0
-            return int(volt_to_cm(voltage))
+            if(voltage < self.VOLTAGE_ARR[-1]):
+                return -1
+            return UTILS.volt_to_cm_poly(voltage,self.coefficients)
         
         except RuntimeWarning as e:
             print(e)
@@ -59,18 +60,13 @@ class RangeSensor:
             print(e)
             return -1
     
-    def get_data(self) -> tuple[int,float,int]:
+    def get_data(self) -> tuple[int,float,float]:
         """Returns the raw value and the voltage, and estimated distance in cm.
         Returns:
             tuple[int,float]: (raw value, voltage)
         """
-        # TODO implement the distance calculation
         return self.chan0.value, self.chan0.voltage , self.get_cm_distance()
     
     def __str__(self) -> str:
         return f"Raw ADC Value: {self.chan0.value} ADC Voltage: {self.chan0.voltage:.2f}"
 
-
-
-def volt_to_cm(voltage:float):  
-    return 46.371 * voltage**6 - 462.87 * voltage**5 + 1878.4 * voltage**4 - 3975.3 * voltage**3 + 4655.9 * voltage**2 - 2916.3 * voltage + 828.41
