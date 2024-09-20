@@ -72,5 +72,5 @@ class RangeSensor:
 
 
 
-def volt_to_cm(voltage:float):
+def volt_to_cm(voltage:float):  
     return 46.371 * voltage**6 - 462.87 * voltage**5 + 1878.4 * voltage**4 - 3975.3 * voltage**3 + 4655.9 * voltage**2 - 2916.3 * voltage + 828.41

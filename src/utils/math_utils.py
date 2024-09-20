@@ -2,6 +2,8 @@ from ..models import Cords
 import math
 import numpy as np
 
+
+
 def get_dot_product(cord1:Cords,cord2:Cords):
     """Returns the dot product of two cords
     Args:
@@ -104,3 +106,45 @@ def get_robust_avg(array:np.ndarray) -> float:
     """
     array = get_removed_outliers(array)
     return float(np.mean(array))
+
+def print_out_python_formatted_poly(coefficients:np.ndarray):
+    """Prints out the coefficients in a python formatted polynomial"""
+    equation_string = ""
+    for i in range(len(coefficients)):
+        equation_string += f"{coefficients[i]:.2f} * voltage**{len(coefficients)-i-1} + "
+    print(equation_string.rstrip(" + "))
+
+def generate_coefficients_equation(degree:int,y_rr:np.ndarray,x:np.ndarray) -> np.ndarray:
+    """Generates the coefficients for a polynomial equation
+    Args:
+        degree (int): The degree of the polynomial
+        y_rr (np.ndarray): The y values
+        x (np.ndarray): The x values
+    Returns:
+        np.ndarray: The coefficients of the polynomial
+    Example:
+        degree = 4
+        y_rr = np.array([1,2,3,4,5])
+        x = np.array([4,3,2,5,0])
+        generate_coefficients_equation(degree,y_rr,x)
+        Output:
+        array([-0.25,  1.75, -3.  ,  1.5 ,  1.  ])
+    """
+    coefficients =  np.polyfit(y_rr,x,degree)
+    return coefficients
+
+def volt_to_cm_poly(voltage:float,coefficients:np.ndarray):
+    cm = 0
+    for i in range(len(coefficients)):
+        cm += coefficients[i] * voltage**(len(coefficients)-i-1)
+    return cm
+
+
+def main():
+    test_coeffs = generate_coefficients_equation(6,np.array([1,2,3,4,5]),np.array([4,3,2,5,0]))
+    print(test_coeffs)
+    print_out_python_formatted_poly(test_coeffs )
+
+
+if __name__ == '__main__':
+    main()

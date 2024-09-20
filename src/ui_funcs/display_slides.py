@@ -75,14 +75,14 @@ def run_slide_show(oled_display:OledDisplay,slide_time:int,ip:bool):
         rgb_sensor = RgbSensor()
         led_22 = Led(22)
         display_names = ["Time","Pressure","Temperature","Altitude",
-                        # "Range",
+                        "Range",
                          "Compass","RGB"]
         display_order = [
         get_current_time_string,
         lambda : get_pressure_string(mpl_sensor),
         lambda : get_temperature_string(mpl_sensor),
         lambda : get_altitude_string(mpl_sensor),   
-        #lambda : f"Range Sensor\n{range_sensor.get_cm_distance()}cm",
+        lambda : f"Range Sensor\n{range_sensor.get_cm_distance()}cm",
         lambda : get_compass_string(magnetic_sensor),       
         lambda : f"RGB Sensor\n{rgb_sensor.get_rgb()}\n{rgb_sensor.get_color_name()}"
         ]
