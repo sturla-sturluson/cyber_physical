@@ -8,6 +8,7 @@ from typing import Callable
 import asyncio
 import threading
 import os
+from ..constants import LED_PIN_NUMBER
 
 def timed_slides(oled_display:OledDisplay,slide_time:int,display_order:list[Callable]):
     count = 0
@@ -85,7 +86,7 @@ def run_slide_show(oled_display:OledDisplay,slide_time:int,ip:bool):
         range_sensor = RangeSensor()
         magnetic_sensor = MagneticSensor()
         rgb_sensor = RgbSensor()
-        led_22 = Led(22)
+        compass_led = Led(LED_PIN_NUMBER)
         display_names = ["Time","Pressure","Temperature","Altitude",
                         "Range",
                          "Compass","RGB"]
@@ -106,7 +107,7 @@ def run_slide_show(oled_display:OledDisplay,slide_time:int,ip:bool):
 
         # If slide time is less than 1, run the user prompt slide show, wait for user input to switch slides
         #if(slide_time < 1):
-        user_prompt_slides = UserPromptSlides(oled_display,display_order,display_names,led_22,magnetic_sensor)
+        user_prompt_slides = UserPromptSlides(oled_display,display_order,display_names,compass_led,magnetic_sensor)
         asyncio.run(user_prompt_slides.user_prompt_slides())
         # else:
         #     timed_slides(oled_display,slide_time,display_order)

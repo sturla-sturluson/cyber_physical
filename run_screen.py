@@ -27,7 +27,7 @@ def main():
     parser.add_argument(f"-{COMPASS_FLAG}", action="store_true", help=f"Display the compass, add -{CALIBRATION_FLAG} to calibrate the compass")
     parser.add_argument(f"-{CALIBRATION_FLAG}", action="store_true", help="Calibrate the compass or range sensor")
     parser.add_argument(f"-{RGB_FLAG}", action="store_true", help="Display the RGB sensor")
-    parser.add_argument(f"-{RANGE_FLAG}", action="store_true", help="Display the range sensor, add -{COMPASS_CALIBRATION_FLAG} to calibrate the range sensor")
+    parser.add_argument(f"-{RANGE_FLAG}", action="store_true", help=f"Display the range sensor, add -{CALIBRATION_FLAG} to calibrate the range sensor")
     args = parser.parse_args()
     print(f"Args: {args}")
      
@@ -45,7 +45,7 @@ def main():
     elif args.range:
         app(range_sensor=True, calibrate=args.cal)
     else:
-        app(slide=slide, slide_time=slide_time)
+        app()
 
 
 

@@ -1,8 +1,4 @@
-from .sensors import MplSensor,RgbSensor,MagneticSensor
-from .utils import get_current_time_string, get_ip_string, get_pressure_string, get_temperature_string, get_altitude_string
 from .display import OledDisplay
-import time
-import datetime as dt
 from .ui_funcs import (
     run_slide_show,
     run_display_compass,
@@ -42,8 +38,7 @@ def app(
             else:
                 run_display_range_sensor(oled_display)
         else:
-            oled_display.display_text(get_ip_string())
-            input("Press Enter to quit")
+            run_slide_show(oled_display,-1,ip)
 
 
 
