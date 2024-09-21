@@ -105,6 +105,8 @@ def get_robust_avg(array:np.ndarray) -> float:
         float: The average of the array
     """
     array = get_removed_outliers(array)
+    if(len(array) == 0):
+        return 0
     return float(np.mean(array))
 
 def print_out_python_formatted_poly(coefficients:np.ndarray):
@@ -117,7 +119,10 @@ def print_out_python_formatted_poly(coefficients:np.ndarray):
 # Creating compound typehint for the function
 
 
-def generate_coefficients_equation(degree:int,y_rr:np.ndarray|list[float]|list[int],x:np.ndarray|list[float]|list[int]) -> np.ndarray:
+def generate_coefficients_equation(degree:int,
+        y_arr:np.ndarray|list[float]|list[int],
+        x_arr:np.ndarray|list[float]|list[int]
+    ) -> np.ndarray:
     """Generates the coefficients for a polynomial equation
     Args:
         degree (int): The degree of the polynomial
@@ -125,26 +130,16 @@ def generate_coefficients_equation(degree:int,y_rr:np.ndarray|list[float]|list[i
         x (np.ndarray): The x values
     Returns:
         np.ndarray: The coefficients of the polynomial
-    Example:
-        degree = 4
-        y_rr = np.array([1,2,3,4,5])
-        x = np.array([4,3,2,5,0])
-        generate_coefficients_equation(degree,y_rr,x)
-        Output:
-        array([
-        -5.36784506e-09             
-         4.00801473e-07        
-         3.02151621e-04        
-        -5.57442814e-02        
-         3.28273748e+00  
-        ])
     """
-    coefficients =  np.polyfit(y_rr,x,degree)
+    coefficients =  np.polyfit(y_arr,x_arr,degree)
     return coefficients
 
 def volt_to_cm_poly(voltage:float,coefficients:np.ndarray)->float:
+    """Converts the voltage to cm using the polynomial coefficients"""
     cm = 0
     for i in range(len(coefficients)):
         cm += coefficients[i] * voltage**(len(coefficients)-i-1)
     return float(cm)
+
+
 

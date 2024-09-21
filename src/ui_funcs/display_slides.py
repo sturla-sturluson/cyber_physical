@@ -1,7 +1,18 @@
 from ..display import OledDisplay
 from ..sensors import MplSensor, RangeSensor,MagneticSensor,RgbSensor
 from ..led import Led
-from ..utils import get_current_time_string,get_range_sensor_string,get_compass_string, get_ip_string, get_pressure_string, get_temperature_string, get_altitude_string
+from ..utils import (
+    get_current_time_string,
+    get_range_sensor_string,
+    get_compass_string,
+    get_ip_string,
+    get_pressure_string,
+    get_temperature_string,
+    get_current_date_time_string,
+    get_altitude_string,
+    get_barometer_string,
+    get_color_string
+)
 import time
 import datetime as dt
 from typing import Callable
@@ -87,17 +98,18 @@ def run_slide_show(oled_display:OledDisplay,slide_time:int,ip:bool):
         magnetic_sensor = MagneticSensor()
         rgb_sensor = RgbSensor()
         compass_led = Led(LED_PIN_NUMBER)
-        display_names = ["Time","Pressure","Temperature","Altitude",
-                        "Range",
-                         "Compass","RGB"]
+        display_names = ["Time",
+                         "Barometer",
+                         "RGB",
+                         "Compass",
+                         "Range",
+                         ]
         display_order = [
-        get_current_time_string,
-        lambda : get_pressure_string(mpl_sensor),
-        lambda : get_temperature_string(mpl_sensor),
-        lambda : get_altitude_string(mpl_sensor),   
-        lambda : get_range_sensor_string(range_sensor),
+        get_current_date_time_string,
+        lambda : get_barometer_string(mpl_sensor),
+        lambda : get_color_string(rgb_sensor),
         lambda : get_compass_string(magnetic_sensor),       
-        lambda : f"RGB Sensor\n{rgb_sensor.get_rgb()}\n{rgb_sensor.get_color_name()}"
+        lambda : get_range_sensor_string(range_sensor),
         ]
 
         if(ip): # Add IP slide to the first position
