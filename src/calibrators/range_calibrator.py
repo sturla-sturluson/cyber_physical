@@ -51,7 +51,6 @@ class RangeSensorCalibrator:
         avg_measurement = get_robust_avg(measurement_arr)
         self.measurements.append((distance,avg_measurement,avg_voltage))
 
-
     def _input_thread(self):
         """Handle user input in a separate thread."""
         while len(self.measurements) < len(self.distances):
@@ -71,7 +70,6 @@ class RangeSensorCalibrator:
         with open(time_stamp_file_path, "w") as file:
             json.dump(data, file, indent=4)
         print(f"Calibration data saved to {file_path}")
-
 
     async def calibrate(self):
         threading.Thread(target=self._input_thread).start()
