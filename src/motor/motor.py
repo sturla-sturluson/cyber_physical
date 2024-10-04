@@ -12,7 +12,7 @@ class Motor:
     def __init__(self,gpio_in_1:int,gpio_in_2:int,name:str="Motor"):
         self.gpio_in_1 = gpio_in_1
         self.gpio_in_2 = gpio_in_2
-        GPIO.setmode(GPIO.BCM)
+        #GPIO.setmode(GPIO.BCM)
         nSLEEP = 25  # Connect nSLEEP to GPIO 25 or directly to 3.3V/5V
 
         self.NAME = name

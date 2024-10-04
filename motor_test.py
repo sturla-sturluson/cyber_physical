@@ -6,6 +6,8 @@ import sys
 import tty
 import termios
 import datetime as dt
+import pygame
+
 
 
 
@@ -37,7 +39,7 @@ async def launch_key_listener(key_map):
     """Launch a key listener in a separate thread."""
     threading.Thread(target=standard_in_key_listener, args=(key_map,), daemon=True).start()
 
-        
+
 
 def main():
     motor_2_gpio_1 = 6
@@ -47,8 +49,10 @@ def main():
 
     with CarRunner((motor_1_gpio_1,motor_1_gpio_2),(motor_2_gpio_1,motor_2_gpio_2)) as car_runner:
         key_map = {
-            "w" :lambda: car_runner.speed_up(),
-            "s" :lambda: car_runner.speed_down(),
+            "w" :lambda: car_runner.set_wasd(True,False,False,False),
+            "s" :lambda: car_runner.set_wasd(False,True,False,False),
+            "a" :lambda: car_runner.set_wasd(False,False,True,False),
+            "d" :lambda: car_runner.set_wasd(False,False,False,True),
             "q" :lambda: car_runner.shut_down(),
             " " :lambda: car_runner.motor_stop(),
         }
