@@ -1,10 +1,11 @@
-from src.motor import Motor
+from src import CarRunner
 import asyncio
 import threading
 import os
 import sys
 import tty
 import termios
+import datetime as dt
 
 
 
@@ -36,29 +37,27 @@ async def launch_key_listener(key_map):
     """Launch a key listener in a separate thread."""
     threading.Thread(target=standard_in_key_listener, args=(key_map,), daemon=True).start()
 
+        
+
 def main():
-    gpio_1 = 6
-    gpio_2 = 13
-    with Motor(gpio_1,gpio_2) as motor:
+    motor_2_gpio_1 = 6
+    motor_2_gpio_2 = 13
+    motor_1_gpio_1 = 20
+    motor_1_gpio_2 = 21
+
+    with CarRunner((motor_1_gpio_1,motor_1_gpio_2),(motor_2_gpio_1,motor_2_gpio_2)) as car_runner:
         key_map = {
-            "w": lambda: motor.speed_up(),
-            "s": lambda: motor.speed_down(),
-            " ": lambda: motor.motor_stop(),
-            "q":lambda: motor.stop_loop()
+            "w" :lambda: car_runner.speed_up(),
+            "s" :lambda: car_runner.speed_down(),
+            "q" :lambda: car_runner.shut_down(),
+            " " :lambda: car_runner.motor_stop(),
         }
+
+            
         # Launch the key listener in a separate thread
         asyncio.run(launch_key_listener(key_map))
         # Start the motor loop
-
-        asyncio.run(motor.motor_loop())
-
-
-
-
-
-
-
-
+        asyncio.run(car_runner.motor_loop())
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,6 @@
 import socket
 
-def get_local_ip():
+def get_local_ip()->str:
     ip_address = ""
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
