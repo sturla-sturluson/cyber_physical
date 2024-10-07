@@ -1,18 +1,14 @@
 import RPi.GPIO as GPIO
-
+from . import MAX_SPEED, MIN_SPEED, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
+from .common import get_duty_cycle_values_from_speed
 
 class Motor:
-    FORWARD = 0
-    BACKWARD = 0
-
-    MAX_SPEED = 100
-    SPEED_DELTA = 10
     NAME:str = "Motor"
 
     def __init__(self,gpio_in_1:int,gpio_in_2:int,name:str="Motor"):
         self.gpio_in_1 = gpio_in_1
         self.gpio_in_2 = gpio_in_2
-        #GPIO.setmode(GPIO.BCM)
+        GPIO.setmode(GPIO.BCM)
         nSLEEP = 25  # Connect nSLEEP to GPIO 25 or directly to 3.3V/5V
 
         self.NAME = name
@@ -31,16 +27,7 @@ class Motor:
         self.pwm_AIN1.start(0)
         self.pwm_AIN2.start(0)
 
-        self._set_speed()
-
-    async def motor_loop(self):
-        """Motor loop that runs until stop_loop is called"""
-        self._print_message("Motor Loop Started")
-        self.IS_ON = True
-
-    def stop_loop(self):
-        """Stops the motor loop"""
-        self.IS_ON = False
+        self._set_duty_cycle()
 
     def __enter__(self):
         return self
@@ -50,7 +37,7 @@ class Motor:
 
     def cleanup(self):
         """Cleans up the motor"""
-        self._print_message("Cleaning up Motor")
+        print(f"Cleaning up {self.NAME}")
         GPIO.cleanup()
         self.motor_stop()
 
@@ -58,40 +45,20 @@ class Motor:
         """Stops the motor"""
         self.BACKWARD = 0
         self.FORWARD = 0
-        self._print_message("Motor Stopped")
-        self._set_speed()      
+        self._set_duty_cycle()
 
-    def speed_up(self):
-        """Speeds up the motor"""
-        self._print_message("Speeding Up")
-        self.FORWARD,self.BACKWARD = self._get_speeds_from_current_speed(self.SPEED_DELTA)
-        # Update ui event
-        self._set_speed()
-    
     def set_speed(self,value:int):
         """Sets the speed from -100 to 100"""
-        if(value > 0):
-            self.FORWARD = min(value,self.MAX_SPEED)
-            self.BACKWARD = 0
-        elif(value < 0):
-            self.FORWARD = 0
-            self.BACKWARD = min(-value,self.MAX_SPEED)
-        else:
-            self.FORWARD = 0
-            self.BACKWARD = 0
-        self._set_speed()
-        self._print_message(f"Speed set to {value}")
+        ain_1,ain_2 = get_duty_cycle_values_from_speed(value)
+        self.FORWARD = ain_1
+        self.BACKWARD = ain_2
+        self._set_duty_cycle()
 
-    def speed_down(self):
-        """Speeds down the motor"""
-        self._print_message("Speeding Down")
-        self.FORWARD,self.BACKWARD = self._get_speeds_from_current_speed(-self.SPEED_DELTA)
-        # Update ui event
-        self._set_speed()   
 
-    def _set_speed(self):
-        self.pwm_AIN1.ChangeDutyCycle(min(self.FORWARD,100))
-        self.pwm_AIN2.ChangeDutyCycle(min(self.BACKWARD,100))
+    def _set_duty_cycle(self):
+        """Sets the duty cycle for the motor"""
+        self.pwm_AIN1.ChangeDutyCycle(self.FORWARD)
+        self.pwm_AIN2.ChangeDutyCycle(self.BACKWARD)
 
     @property
     def current_speed(self):
@@ -101,20 +68,6 @@ class Motor:
         elif(self.BACKWARD > 0):
             return -self.BACKWARD
         return 0
-
-    def _get_speeds_from_current_speed(self,delta:int):
-        """Returns the forward and backward speeds from the current speed"""
-        new_speed = self.current_speed + delta
-        if(new_speed >= 0):
-            return min(new_speed,self.MAX_SPEED),0
-        return 0,min(-new_speed,self.MAX_SPEED)
-    
-    def _print_message(self,message:str):
-        """Prints a message to the console, clearing the screen first"""
-        # Flush the buffer
-        print("\033c", end="")
-        print(f"{self.NAME}: {message}")
-
 
     def __str__(self) -> str:
         return f"{self.NAME}: {self.current_speed}"
