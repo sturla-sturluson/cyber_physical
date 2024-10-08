@@ -1,10 +1,9 @@
 from . import Motor
-from . import MAX_SPEED, MIN_SPEED, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
-
+from .common import clamp_speed
 class Motors:
     ERROR_RATE = 0.005 # Change in speed to update the motors
-    LAST_FORWARD_MOTION:int
-    LAST_TURNING_MOTION:int
+    LAST_FORWARD_MOTION:int = 0
+    LAST_TURNING_MOTION:int = 0
     def __init__(self,motor_1_pins:tuple[int,int],motor_2_pins:tuple[int,int]):
         self.motor_1 = Motor(*motor_1_pins,name="Left Motor")
         self.motor_2 = Motor(*motor_2_pins,name="Right Motor")
@@ -50,20 +49,28 @@ class Motors:
         # If we are going forward, and turning motion is positive, we are turning right
         # If we are going backwards , turning motion is positive we are also turning right
         # This way we know if turning right, always lower the right motor speed and vice versa
-        if(turning_motion > 0):
-            right_motor_speed = forward_motion - (turning_motion / 2 * int(forward_motion > 0))
-            left_motor_speed = forward_motion
-        else:
-            left_motor_speed = forward_motion + (turning_motion / 2 * int(forward_motion > 0))
-            right_motor_speed = forward_motion
+        right_motor_speed,left_motor_speed = forward_motion,forward_motion
+        if(abs(turning_motion) < 1):
+            return right_motor_speed,left_motor_speed
+        turning_adjusted = get_scaled_turning_speed(forward_motion,turning_motion)
+        turning_adjusted *= 0.50
+        right_motor_speed += turning_adjusted
+        left_motor_speed -= turning_adjusted
+        right_motor_speed = clamp_speed(right_motor_speed)
+        left_motor_speed = clamp_speed(left_motor_speed)
+        return right_motor_speed,left_motor_speed
+        
 
-        return int(left_motor_speed),int(right_motor_speed)
 
-
+    
 
     def __str__(self) -> str:
         return f"{self.motor_1}\n{self.motor_2}"
     
     def __exit__(self, exc_type, exc_value, traceback):
         self.cleanup()
-        
+
+
+
+def get_scaled_turning_speed(forward_motion:int,turning_motion:int):
+    return int(forward_motion * (turning_motion/100))

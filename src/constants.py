@@ -15,4 +15,12 @@ try:
 except ValueError:
     LED_PIN_NUMBER = DEFAULT_LED_PIN
 
-                   
+
+
+# Motors constants
+
+MAX_SPEED = 100
+MIN_SPEED = -100
+
+MAX_DUTY_CYCLE = 100
+MIN_DUTY_CYCLE = 0

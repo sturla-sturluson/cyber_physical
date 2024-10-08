@@ -1,9 +1,11 @@
 import RPi.GPIO as GPIO
-from . import MAX_SPEED, MIN_SPEED, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
+from ..constants import MAX_SPEED, MIN_SPEED, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
 from .common import get_duty_cycle_values_from_speed
 
 class Motor:
     NAME:str = "Motor"
+    FORWARD:int = 0
+    BACKWARD:int = 0
 
     def __init__(self,gpio_in_1:int,gpio_in_2:int,name:str="Motor"):
         self.gpio_in_1 = gpio_in_1

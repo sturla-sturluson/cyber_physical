@@ -1,6 +1,7 @@
 
 import argparse
 from src import app
+import RPi.GPIO as GPIO
 # -ip : Display the IP address
 IP_FLAG = "ip"
 # -slide <seconds> : Run the slide show with the specified number of seconds per slide
@@ -16,8 +17,17 @@ RGB_FLAG = "rgb"
 RANGE_FLAG = "range"
 
 
+# def clear_gpio_pins_for_motor():
+#     list_of_pins = [6,13,20,21]
+#     GPIO.setmode(GPIO.BCM)
+#     for pin in list_of_pins:
+#         GPIO.setup(pin,GPIO.OUT)
+#         GPIO.output(pin,GPIO.LOW)
+#     GPIO.cleanup()
+
 
 def main():
+    # clear_gpio_pins_for_motor()
     slide = False
     slide_time = 4
 

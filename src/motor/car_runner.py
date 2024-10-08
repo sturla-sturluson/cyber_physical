@@ -4,7 +4,7 @@ import os
 import asyncio
 import datetime as dt
 import math
-from . import MAX_SPEED, MIN_SPEED, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
+from .. constants import MAX_SPEED, MIN_SPEED, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
 from .common import clamp_speed
 
 

@@ -1,13 +1,22 @@
 ps aux | grep run_screen.py
 
 
+sudo nano /etc/systemd/system/run_screen.service
+
 systemctl enable daemon-reload
 systemctl enable run_screen.service
 systemctl start run_screen.service
 systemctl stop run_screen.service
 
-sudo nano /etc/systemd/system/run_screen.service
 
+sudo nano /etc/systemd/system/clear_gpio.service
+
+systemctl enable daemon-reload
+systemctl enable clear_gpio.service
+systemctl start clear_gpio.service
+systemctl stop clear_gpio.service
+
+sudo systemctl start gpclear_gpioio_init.service
 
 source cpsy/bin/activate
 
