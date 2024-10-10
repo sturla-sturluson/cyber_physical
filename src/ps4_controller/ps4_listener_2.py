@@ -1,7 +1,7 @@
 import pygame
 import os
 from ..motor import Motors
-from ..utils import clamp_speed,get_clamped_dead_zone
+from ..utils import clamp_speed,get_clamped_dead_zone,get_heading_difference
 from .ps4_button import PS4Button
 from .ps4_controller import PS4ControllerInput
 from ..sensors import MagneticSensor,RangeSensor
@@ -14,11 +14,6 @@ def is_off_course(current_heading:int,target_heading:int, dead_zone:int = 5):
         delta = 360 - delta
     return delta > dead_zone
 
-def get_heading_difference(current_heading:int,target_heading:int):
-    delta = abs(current_heading - target_heading) % 360
-    if delta > 180:
-        delta = 360 - delta
-    return delta
 
 
 class PS4Listener:

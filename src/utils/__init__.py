@@ -22,5 +22,6 @@ from .error_help import save_error_report
 
 from .common import (
     get_clamped_dead_zone,
-    clamp_speed
+    clamp_speed,
+    get_heading_difference
 )
