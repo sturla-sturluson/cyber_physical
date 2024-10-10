@@ -1,4 +1,4 @@
-from .common import get_clamped_dead_zone
+from ..utils import get_clamped_dead_zone
 
 class PS4Button:
     type:str   # Button or Axis

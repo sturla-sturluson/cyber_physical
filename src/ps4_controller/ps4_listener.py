@@ -1,7 +1,7 @@
 import pygame
 import os
-from .motors import Motors
-from .common import clamp_speed,get_clamped_dead_zone
+from ..motor import Motors
+from ..utils import clamp_speed,get_clamped_dead_zone
 from .ps4_button import PS4Button
 from .ps4_controller import PS4ControllerInput
 from ..sensors import MagneticSensor,RangeSensor
@@ -16,9 +16,6 @@ def is_off_course(current_heading:int,target_heading:int, dead_zone:int = 5):
 
 
 def drive_straight_range(motors:Motors,mag_sensor:MagneticSensor,range_sensor:RangeSensor,target_speed:int,target_heading:int):
-
-    
-
     current_heading = mag_sensor.get_angle()
     off_course = is_off_course(current_heading,target_heading)
     if off_course:

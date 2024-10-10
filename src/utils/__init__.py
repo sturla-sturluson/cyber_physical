@@ -19,3 +19,8 @@ from .mag_sensor_utils import get_translation_function, get_NSEW_string
 from .gpio_pin import get_gpio_pin_number
 from .x_y_map import X_Y_Map
 from .error_help import save_error_report
+
+from .common import (
+    get_clamped_dead_zone,
+    clamp_speed
+)

@@ -5,7 +5,7 @@ import asyncio
 import datetime as dt
 import math
 from .. constants import MAX_SPEED, MIN_SPEED, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
-from .common import clamp_speed
+from ..utils.common import clamp_speed
 
 
 class CarRunner():

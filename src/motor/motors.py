@@ -1,5 +1,5 @@
 from . import Motor
-from .common import clamp_speed
+from ..utils.common import clamp_speed
 class Motors:
     ERROR_RATE = 0.005 # Change in speed to update the motors
     LAST_FORWARD_MOTION:int = 0
