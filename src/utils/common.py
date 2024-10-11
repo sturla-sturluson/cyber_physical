@@ -25,11 +25,11 @@ def get_duty_cycle_values_from_speed(target_speed:int)->tuple[int,int]:
         return (target_speed,0)
     return (0,-target_speed)
 
-def get_clamped_dead_zone(value:float,dead_zone:float,released:int=0)-> float:
+def get_clamped_dead_zone(value:float,dead_zone:float,released:int=0,min:int=-1,max:int=1)->float:
     """Returns the value if its outside the dead zone"""
     if abs(value) < dead_zone:
         return released
-    return clamp_speed(value,-1,1)
+    return clamp_speed(value,min,max)
 
 
 
@@ -44,7 +44,15 @@ def is_off_course(current_heading:int,target_heading:int, dead_zone:int = 10):
     delta = get_heading_difference(current_heading,target_heading)
     return delta > dead_zone
 
-def main():
+
+def get_scaled_number(value:int|float,min:int|float,max:int|float,new_min:int,new_max:int)->int:
+    """Scales the value from min to max to new_min to new_max"""
+    curr_range_value = max - min
+    normalize_range_value = new_max - new_min
+    normalized_value = (value - min) / curr_range_value
+    return int(new_min + (normalized_value * normalize_range_value))
+
+def heading_test():
     target_heading = 0
     test_headings = [0,10,8,9,68,345,350,355,359,360]
     # header
@@ -64,6 +72,13 @@ def main():
         printstr += f" | {diff}°".ljust(fourth_split)
         print(printstr)
         
+def main():
+    # scale test
+    curr_min = -1
+    curr_max = 1
+    curr_value = 1
+    scale_min,scale_max = 0,100
+    print(get_scaled_number(curr_value,curr_min,curr_max,scale_min,scale_max))
 
 
 if __name__ == '__main__':

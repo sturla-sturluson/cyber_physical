@@ -1,10 +1,17 @@
 from . import Motor
 from ..utils.common import clamp_speed
+import RPi.GPIO as GPIO
 class Motors:
     ERROR_RATE = 0.005 # Change in speed to update the motors
     LAST_FORWARD_MOTION:int = 0
     LAST_TURNING_MOTION:int = 0
     def __init__(self,motor_1_pins:tuple[int,int],motor_2_pins:tuple[int,int]):
+        # Turn on the gpio motor pin
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(25, GPIO.OUT)
+        # Set to 
+        GPIO.output(25, GPIO.HIGH)
+
         self.motor_1 = Motor(*motor_1_pins,name="Left Motor")
         self.motor_2 = Motor(*motor_2_pins,name="Right Motor")
 

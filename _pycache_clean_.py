@@ -25,8 +25,10 @@ def main():
     pycache_dirs = find_all_dirs()
 
     print(f"Found {len(pycache_dirs)} __pycache__ directories")
+    if(len(pycache_dirs) == 0):
+        return
     for dir in pycache_dirs:
-        print(f"Removing {dir}")
+        print(f"Found {dir}")
     response = input("Would you like to remove all the directories? (y/n): ")
     if response == "y":
         for dir in pycache_dirs:

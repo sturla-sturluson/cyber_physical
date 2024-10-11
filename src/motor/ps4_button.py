@@ -1,4 +1,4 @@
-from ..utils import get_clamped_dead_zone,get_scaled_number
+from .common import get_clamped_dead_zone
 
 class PS4Button:
     type:str   # Button or Axis
@@ -24,9 +24,7 @@ class PS4Button:
         return f"{self.name} : {self.value}"
     
     def set_value(self,value:int|float,dead_zone:float):
-        self.value = min(max(value,self.min),self.max)
-        if self.type == "Axis" and abs(self.value) < dead_zone:
-            self.value = self.released
+        self.value = get_clamped_dead_zone(value,dead_zone,self.released)
     
     @property
     def is_pressed(self):
@@ -34,6 +32,7 @@ class PS4Button:
     
     def get_normalized_value(self,min:int=0,max:int=100)->int:
         """Returns the value normalized between min and max"""
-        scaled_value = get_scaled_number(self.value,self.min,self.max,min,max)
-        # print(f"Value : {self.value} : {scaled_value}")
-        return scaled_value
+        curr_range_value = self.max - self.min
+        normalize_range_value = max - min
+        normalized_value = (self.value - self.min) / curr_range_value
+        return int(min + (normalized_value * normalize_range_value))

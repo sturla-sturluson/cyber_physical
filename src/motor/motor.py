@@ -1,6 +1,6 @@
 import RPi.GPIO as GPIO
 from ..constants import MAX_SPEED, MIN_SPEED, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
-from ..utils.common import get_duty_cycle_values_from_speed
+from ..utils import get_duty_cycle_values_from_speed
 
 class Motor:
     NAME:str = "Motor"

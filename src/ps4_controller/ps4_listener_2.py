@@ -5,6 +5,7 @@ from ..utils import clamp_speed,get_clamped_dead_zone,get_heading_difference
 from .ps4_button import PS4Button
 from .ps4_controller import PS4ControllerInput
 from ..sensors import MagneticSensor,RangeSensor
+import datetime as dt
 
 
 def is_off_course(current_heading:int,target_heading:int, dead_zone:int = 5):
@@ -18,7 +19,7 @@ def is_off_course(current_heading:int,target_heading:int, dead_zone:int = 5):
 
 class PS4Listener:
     ps_4_axis_dead_zone = 0.10
-    fps = 15
+    fps = 10
 
 
     target_speed = 100
@@ -26,18 +27,20 @@ class PS4Listener:
     is_auto_drive = False
 
     # Turn on auto drive button
-    auto_drive_button:PS4Button = PS4Button("Button",id=3,name="Triangle",released=0)
+    auto_drive_button:PS4Button = PS4Button("Button",id=2,name="Triangle",released=0)
     #Brake button (also stops auto drive)
-    brake_button:PS4Button = PS4Button("Button",id=1,name="Cross",released=0)
+    brake_button:PS4Button = PS4Button("Button",id=3,name="Square",released=0)
     # Accelerate and decelerate
     accelerate_button:PS4Button = PS4Button("Axis",id=5,name="R2",released=-1,min=-1,max=1)
     decelerate_button:PS4Button = PS4Button("Axis",id=2,name="L2",released=-1,min=-1,max=1)
     # Left and right motion
-    left_motion:PS4Button = PS4Button("Axis",id=0,name="Left Stick X",released=0,min=-1,max=1)
+    turn_button:PS4Button = PS4Button("Axis",id=0,name="Left Stick X",released=0,min=-1,max=1)
 
     # Current motions
     forward_motion,turning_motion = 0,0
      
+
+    last_print = dt.datetime.now()
 
     def __init__(self,motors:Motors):
         self.motors = motors
@@ -57,23 +60,25 @@ class PS4Listener:
         print(f"Joystick : {self.joystick.get_name()}")
         # All the buttons for manual control
         self.ps4_input = PS4ControllerInput(
-            self.accelerate_button,
-            self.decelerate_button,
-            self.left_motion,
-            self.brake_button,
-            self.ps_4_axis_dead_zone
+            accelerate_btn=self.accelerate_button,
+            reverse_btn= self.decelerate_button,
+            steer_btn=self.turn_button,
+            brake_btn=self.brake_button,
+            dead_zone=self.ps_4_axis_dead_zone
         )
 
         self.mag_sensor = MagneticSensor()
         self.range_sensor = RangeSensor()
+
+        self._event_loop()
     
 
     def _event_loop(self):
-        while running:
+        while self.running:
             self.clock.tick(self.fps)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    running = False
+                    self.running = False
                 # If we press triangle, we start auto drive
                 self._toggle_auto_drive(event)
 
@@ -97,7 +102,7 @@ class PS4Listener:
             if event.type == pygame.JOYBUTTONDOWN and event.button in [self.auto_drive_button.id,self.brake_button.id]:
                 self.is_auto_drive = False
         else:
-            if event.type == pygame.JOYBUTTONDOWN and event.button == self.auto_drive_button:
+            if event.type == pygame.JOYBUTTONDOWN and event.button == self.auto_drive_button.id:
                 self.is_auto_drive = True
                 self.target_heading = self.mag_sensor.get_angle()
 
@@ -115,10 +120,17 @@ class PS4Listener:
             turning_motion = self.target_heading - current_heading
             turning_motion = clamp_speed(turning_motion,-15,15)
             self.motors.set_speed(self.target_speed,turning_motion)
+        else:
+            # if we are on course, we go straight
+            self.motors.set_speed(self.target_speed,0)
 
 
     def _print_status(self):
         """Prints the status of the motors"""
+        # only print once a second
+        if (dt.datetime.now() - self.last_print).seconds < 0.5:
+            return
+        self.last_print = dt.datetime.now()
         os.system('clear')
         status_str = ""
         # Auto drive on or off
