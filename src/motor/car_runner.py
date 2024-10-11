@@ -42,6 +42,7 @@ class CarRunner():
     def set_speed(self,forward_motion:int,turning_motion:int):
         """Sets the speeds of the car"""
         self.FORWARD_MOTION,self.TURNING_MOTION = forward_motion,turning_motion
+        self._update_speeds()
 
     def cleanup(self):
         """Cleans up the motors"""
@@ -54,17 +55,20 @@ class CarRunner():
         # Launch both motor loops in separate threads
         await self._motor_loop()
 
+
+
     @property
     def motor_speeds(self)->tuple[int,int]:
         """Returns the forward motion of both motors"""
         return self.motors.motor_1.current_speed,self.motors.motor_2.current_speed
     
     async def _motor_loop(self):
-        while not self.stop_event.is_set():
-            await asyncio.sleep(0.05)   
-            self._range_stopper()
-            self._update_speeds()
-            self._update_display()
+        # while not self.stop_event.is_set():
+        #     await asyncio.sleep(0.05)   
+        #     self._range_stopper()
+        #     self._update_speeds()
+        #     self._update_display()
+        ...
 
     def _update_display(self):
         """Updates the display"""
@@ -93,6 +97,7 @@ class CarRunner():
 
     def _update_speeds(self):
         """Updates the speeds of the car"""
+        self._range_stopper()
         if self.STOP_FORWARD:
             self.FORWARD_MOTION = min(self.FORWARD_MOTION,0)
         self.motors.set_speed(self.FORWARD_MOTION,self.TURNING_MOTION)
