@@ -16,18 +16,7 @@ RGB_FLAG = "rgb"
 # -range : Display the range sensor
 RANGE_FLAG = "range"
 
-
-# def clear_gpio_pins_for_motor():
-#     list_of_pins = [6,13,20,21]
-#     GPIO.setmode(GPIO.BCM)
-#     for pin in list_of_pins:
-#         GPIO.setup(pin,GPIO.OUT)
-#         GPIO.output(pin,GPIO.LOW)
-#     GPIO.cleanup()
-
-
 def main():
-    # clear_gpio_pins_for_motor()
     slide = False
     slide_time = 4
 

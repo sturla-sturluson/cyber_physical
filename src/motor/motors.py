@@ -1,19 +1,26 @@
 from . import Motor
-from ..utils.common import clamp_speed
+from ..utils import clamp_speed
+from ..constants import SLEEP_PIN,AIN1_PIN,AIN2_PIN,BIN1_PIN,BIN2_PIN
 import RPi.GPIO as GPIO
+
 class Motors:
     ERROR_RATE = 0.005 # Change in speed to update the motors
     LAST_FORWARD_MOTION:int = 0
     LAST_TURNING_MOTION:int = 0
-    def __init__(self,motor_1_pins:tuple[int,int],motor_2_pins:tuple[int,int]):
+    def __init__(self):
         # Turn on the gpio motor pin
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(25, GPIO.OUT)
-        # Set to 
-        GPIO.output(25, GPIO.HIGH)
+        self._turn_motor_controller_on()
+        motor_1_pins = (AIN1_PIN,AIN2_PIN)
+        motor_2_pins = (BIN1_PIN,BIN2_PIN)
 
         self.motor_1 = Motor(*motor_1_pins,name="Left Motor")
         self.motor_2 = Motor(*motor_2_pins,name="Right Motor")
+
+    def _turn_motor_controller_on(self):
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(SLEEP_PIN, GPIO.OUT)
+        # Set to 
+        GPIO.output(SLEEP_PIN, GPIO.HIGH)
 
     def __enter__(self):
         return self
@@ -38,7 +45,7 @@ class Motors:
         self.LAST_FORWARD_MOTION,self.LAST_TURNING_MOTION = forward_motion,turning_motion
         left_engine_speed,right_engine_speed = forward_motion,forward_motion
         
-        if(turning_motion > 1 or turning_motion < -1):
+        if(abs(turning_motion) > 1):
             left_engine_speed,right_engine_speed = self._calculate_turning_motion_values(forward_motion,turning_motion)
         self.motor_1.set_speed(left_engine_speed)
         self.motor_2.set_speed(right_engine_speed)

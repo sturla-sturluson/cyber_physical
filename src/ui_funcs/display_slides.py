@@ -19,7 +19,7 @@ from typing import Callable
 import asyncio
 import threading
 import os
-from ..constants import LED_PIN_NUMBER
+from ..constants import LED_PIN
 
 
 def _compass_north_function(magnetic_sensor:MagneticSensor,led:Led):
@@ -109,7 +109,7 @@ def run_slide_show(oled_display:OledDisplay,slide_time:int,ip:bool):
         range_sensor = RangeSensor()
         magnetic_sensor = MagneticSensor()
         rgb_sensor = RgbSensor()
-        compass_led = Led(LED_PIN_NUMBER)
+        compass_led = Led(LED_PIN)
         display_names = ["Time",
                          "Barometer",
                          "RGB",

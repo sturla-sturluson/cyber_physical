@@ -11,20 +11,14 @@ class Motor:
         self.gpio_in_1 = gpio_in_1
         self.gpio_in_2 = gpio_in_2
         GPIO.setmode(GPIO.BCM)
-        nSLEEP = 25  # Connect nSLEEP to GPIO 25 or directly to 3.3V/5V
 
         self.NAME = name
-
         # Set up GPIO pins
         GPIO.setup(self.gpio_in_1, GPIO.OUT)
         GPIO.setup(self.gpio_in_2, GPIO.OUT)
-        GPIO.setup(nSLEEP, GPIO.OUT)
-        GPIO.output(nSLEEP, GPIO.HIGH)
-
         # Set up PWM on AIN1 and AIN2
         self.pwm_AIN1 = GPIO.PWM(self.gpio_in_1, 1000)  # 1 kHz frequency
         self.pwm_AIN2 = GPIO.PWM(self.gpio_in_2, 1000)  # 1 kHz frequency
-
         # Start PWM with 0% duty cycle (motor stopped)
         self.pwm_AIN1.start(0)
         self.pwm_AIN2.start(0)

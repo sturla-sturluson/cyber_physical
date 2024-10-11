@@ -1,4 +1,4 @@
-from . import Motor,Motors
+from . import Motors
 import threading
 import os
 import asyncio
@@ -6,69 +6,96 @@ import datetime as dt
 import math
 from .. constants import MAX_SPEED, MIN_SPEED, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
 from ..utils.common import clamp_speed
-
+from ..sensors import RangeSensor
+from ..display import OledDisplay
 
 class CarRunner():
     FORWARD_MOTION:int
     TURNING_MOTION:int
-
-    def __init__(self,motor_1_pins:tuple[int,int],motor_2_pins:tuple[int,int]):
-        self.motors = Motors(motor_1_pins,motor_2_pins)
+    # This is the range that any forward motion will be set to 0
+    STOP_RANGE:int = 40 # in cm
+    STOP_FORWARD:bool = False
+    RANGE_INTERVAL_CHECKER:dt.timedelta = dt.timedelta(milliseconds=500)
+    last_stop_range_check = dt.datetime.now()
+    display:OledDisplay|None = None
+    last_display_time = dt.datetime.now()
+    def __init__(self,
+                 stop_range:int|None = None,
+                 screen_on:bool = False,
+                 ):
+        self.motors = Motors()
         self.FORWARD_MOTION = 0
         self.TURNING_MOTION = 0
+        if stop_range is not None:
+            self.STOP_RANGE = stop_range
+        self.range_sensor = RangeSensor()
+        if screen_on:
+            self.display = OledDisplay()    
         # Create a stop event and ui event
         self.stop_event = threading.Event()
         
-
-    def shut_down(self):
-        """Shuts down the car"""
-        self.motor_stop()
-        self.stop_event.set()
-        self.cleanup()
-    
     def motor_stop(self):
         """Stops the motors"""
-        self.motors.motor_stop()    
+        self.FORWARD_MOTION,self.TURNING_MOTION = 0,0
+        self._update_speeds()
 
-    def set_speeds(self,forward_motion:int,turning_motion:int):
+    def set_speed(self,forward_motion:int,turning_motion:int):
         """Sets the speeds of the car"""
-        self.FORWARD_MOTION = clamp_speed(forward_motion)
-        self.TURNING_MOTION = clamp_speed(turning_motion)
-
+        self.FORWARD_MOTION,self.TURNING_MOTION = forward_motion,turning_motion
 
     def cleanup(self):
         """Cleans up the motors"""
+        self.motor_stop()
         self.motors.cleanup()
+        self.stop_event.set()
 
-    async def motor_loop(self):
+    async def run_car(self):
         # start the display loop
         # Launch both motor loops in separate threads
-        await self._display_thread()
+        await self._motor_loop()
 
-    async def _display_thread(self):
-        last_display_time = dt.datetime.now()
-        # Only refresh terminal every 0.5 seconds
+    @property
+    def motor_speeds(self)->tuple[int,int]:
+        """Returns the forward motion of both motors"""
+        return self.motors.motor_1.current_speed,self.motors.motor_2.current_speed
+    
+    async def _motor_loop(self):
         while not self.stop_event.is_set():
-            if (dt.datetime.now() - last_display_time).total_seconds() > 0.5:
-                self._print_screen()
-                last_display_time = dt.datetime.now()
+            await asyncio.sleep(0.05)   
+            self._range_stopper()
             self._update_speeds()
-            await asyncio.sleep(0.1)   
-            
+            self._update_display()
+
+    def _update_display(self):
+        """Updates the display"""
+        if self.display is None:
+            return
+        if self.last_display_time > dt.datetime.now() - dt.timedelta(milliseconds=250):
+            return
+        self.display.clear()
+        txt_str = f"Forward: {self.FORWARD_MOTION} Turning: {self.TURNING_MOTION}"
+        m1_speed,m2_speed = self.motor_speeds
+        txt_str += f"\nM1: {m1_speed} M2: {m2_speed}"
+        self.display.display_text(txt_str)
+        self.last_display_time = dt.datetime.now()
+
+
+    def _range_stopper(self):
+        """Returns boolean if we are within crash range"""
+        crashing = self.range_sensor.get_cm_distance() < self.STOP_RANGE
+        if(crashing):
+            self.last_stop_range_check = dt.datetime.now()
+            self.STOP_FORWARD = True
+            return
+        if(self.last_stop_range_check > dt.datetime.now() - self.RANGE_INTERVAL_CHECKER):
+            self.STOP_FORWARD = False
+
 
     def _update_speeds(self):
-        """Updates the speeds of the car by updating the Motors"""
+        """Updates the speeds of the car"""
+        if self.STOP_FORWARD:
+            self.FORWARD_MOTION = min(self.FORWARD_MOTION,0)
         self.motors.set_speed(self.FORWARD_MOTION,self.TURNING_MOTION)
-
-
-    def _print_screen(self):
-        """Prints the screen"""
-        os.system('clear')
-        # Print the current time
-        print(dt.datetime.now().strftime("%H:%M:%S"))
-        motors_string = str(self.motors).split("\n")
-        print(motors_string[0])
-        print(motors_string[1])
 
     def __enter__(self):
         return self

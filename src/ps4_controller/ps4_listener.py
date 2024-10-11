@@ -1,6 +1,6 @@
 import pygame
 import os
-from ..motor import Motors
+from ..motor import CarRunner
 from ..utils import clamp_speed,get_clamped_dead_zone,get_heading_difference
 from .ps4_button import PS4Button
 from .ps4_controller import PS4ControllerInput
@@ -20,10 +20,7 @@ def is_off_course(current_heading:int,target_heading:int, dead_zone:int = 5):
 
 class PS4Listener:
     ps_4_axis_dead_zone = 0.10
-    stop_range = 40 # in cm
-    last_stop_range_check = dt.datetime.now()
     fps = 10
-
 
     target_speed = 100
     target_heading = 0
@@ -41,12 +38,11 @@ class PS4Listener:
 
     # Current motions
     forward_motion,turning_motion = 0,0
-     
-
+    
     last_print = dt.datetime.now()
 
-    def __init__(self,motors:Motors):
-        self.motors = motors
+    def __init__(self,car_runner:CarRunner):
+        self.car_runner = car_runner
         # Init pygame
         pygame.init()
         self.running = True
@@ -90,7 +86,6 @@ class PS4Listener:
 
             self._print_status()
 
-            self._range_stopper()
             self._set_speed()
         
     def _manual_control_handler(self):
@@ -145,34 +140,22 @@ class PS4Listener:
         if self.is_auto_drive:
             status_str += f"Target Heading: {self.target_heading}\n"
         # Current heading
-        status_str += f"Current Heading: {self.mag_sensor.get_angle()}\n"
+        angle,x_y,nesw_string = self.mag_sensor.get_data()
+        status_str += f"Current Heading: {angle}\n"
+        status_str += f"Direction: {nesw_string}\n"
         # The range sensor
         status_str += f"Range Sensor: {self.range_sensor.get_cm_distance()}\n"
         # Current speed 
-        status_str += f"Left Speed: {self.motors.motor_1.current_speed}\n"
-        status_str += f"Right Speed: {self.motors.motor_2.current_speed}\n"
+        left_speed,right_speed = self.car_runner.motor_speeds
+        status_str += f"Left Speed: {left_speed}\n"
+        status_str += f"Right Speed: {right_speed}\n"
         # Add the controller values
         status_str += f"Controller Values: {self.forward_motion},{self.turning_motion}\n"
         print(status_str)
 
-    
-    def _range_stopper(self):
-        """Returns boolean if we are within crash range"""
-        crashing = self.range_sensor.get_cm_distance() < self.stop_range
-        if(crashing):
-            self.last_stop_range_check = dt.datetime.now()
-
-
     def _set_speed(self):
         """Sets the speed of the car"""
-        # If there was a last stop range check within the last 1 second, we stop any forward motion
-        if(self.last_stop_range_check > dt.datetime.now() - dt.timedelta(seconds=1)):
-            # If it is within crash range, make sure to put forward motion to 0
-            # If we are reversing that is fine 
-            new_forward_motion = min(self.forward_motion,0)
-            self.motors.set_speed(new_forward_motion,self.turning_motion)
-            return
-        self.motors.set_speed(self.forward_motion,self.turning_motion)
+        self.car_runner.set_speed(self.forward_motion,self.turning_motion)
 
 
 
