@@ -21,7 +21,17 @@ import threading
 import os
 from ..constants import LED_PIN_NUMBER
 
-def timed_slides(oled_display:OledDisplay,slide_time:int,display_order:list[Callable]):
+
+def _compass_north_function(magnetic_sensor:MagneticSensor,led:Led):
+    """Turn on the led if the compass is pointing"""
+    current_nsew = magnetic_sensor.get_data()[2]
+    if(current_nsew == "N"):
+        led.turn_on()
+    else:
+        led.turn_off()
+
+
+def timed_slides(oled_display:OledDisplay,slide_time:int,compass_led_func:Callable,display_order:list[Callable]):
     count = 0
     last_switch_time = dt.datetime.now()
     while True:
@@ -29,7 +39,9 @@ def timed_slides(oled_display:OledDisplay,slide_time:int,display_order:list[Call
             count += 1
             last_switch_time = dt.datetime.now()
         current_text = display_order[count % len(display_order)]()
+        compass_led_func()
         oled_display.display_text(current_text)
+        
         time.sleep(0.25)
 
 class UserPromptSlides:
@@ -104,6 +116,8 @@ def run_slide_show(oled_display:OledDisplay,slide_time:int,ip:bool):
                          "Compass",
                          "Range",
                          ]
+        compass_led_func = lambda : _compass_north_function(magnetic_sensor,compass_led)
+
         display_order = [
         get_current_date_time_string,
         lambda : get_barometer_string(mpl_sensor),
@@ -118,11 +132,11 @@ def run_slide_show(oled_display:OledDisplay,slide_time:int,ip:bool):
 
 
         # If slide time is less than 1, run the user prompt slide show, wait for user input to switch slides
-        #if(slide_time < 1):
-        user_prompt_slides = UserPromptSlides(oled_display,display_order,display_names,compass_led,magnetic_sensor)
-        asyncio.run(user_prompt_slides.user_prompt_slides())
-        # else:
-        #     timed_slides(oled_display,slide_time,display_order)
+        if(slide_time < 1):
+            user_prompt_slides = UserPromptSlides(oled_display,display_order,display_names,compass_led,magnetic_sensor)
+            asyncio.run(user_prompt_slides.user_prompt_slides())
+        else:
+             timed_slides(oled_display,slide_time,compass_led_func,display_order)
 
     except Exception as e:
         print(e)

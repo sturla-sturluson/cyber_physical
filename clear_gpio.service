@@ -1,0 +1,11 @@
+[Unit]
+Description=Set GPIO pins to LOW on boot
+After=multi-user.target
+
+[Service]
+WorkingDirectory=/home/sturla22
+ExecStart=/home/sturla22/cpsy/bin/python3 /run_screen/clear_gpio.py 6 13 20 21
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

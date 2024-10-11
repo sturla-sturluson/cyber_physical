@@ -60,7 +60,7 @@ def get_angle(cord1:Cords,cord2:Cords):
     degrees = math.degrees(math.acos(theta))
     return degrees
 
-def get_midpoints(max_cords:Cords,min_cords:Cords):
+def get_midpoints(max_cords:Cords,min_cords:Cords)->tuple[float,float]:
     """Returns the midpoints of the max and min cords
     Args:
         max_cords (Cords): The max cords

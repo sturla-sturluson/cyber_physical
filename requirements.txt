@@ -6,6 +6,7 @@ adafruit-circuitpython-l3gd20==2.3.19
 adafruit-circuitpython-lsm303-accel==1.1.21
 adafruit-circuitpython-lsm303dlh-mag==1.1.21
 adafruit-circuitpython-mcp3xxx==1.4.17
+adafruit-circuitpython-motor==3.4.13
 adafruit-circuitpython-mpl3115a2==3.0.3
 adafruit-circuitpython-register==1.9.18
 adafruit-circuitpython-requests==4.1.6
@@ -16,13 +17,17 @@ Adafruit-GPIO==1.0.3
 Adafruit-PlatformDetect==3.73.0
 Adafruit-PureIO==1.1.11
 binho-host-adapter==0.1.6
+evdev==1.7.1
 numpy==2.1.1
 pillow==10.4.0
 pyftdi==0.55.4
+pygame==2.6.1
 pyserial==3.5
+python-xlib==0.33
 pyusb==1.2.1
 rpi-ws281x==5.0.0
 RPi.GPIO==0.7.1
+six==1.16.0
 spidev==3.6
 sysv-ipc==1.1.0
 typing_extensions==4.12.2
