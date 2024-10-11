@@ -14,7 +14,7 @@ def main():
     with CarRunner(
         stop_range=stop_range
         ) as car_runner:
-        asyncio.run(car_runner.run_car())
+        # asyncio.run(car_runner.run_car())
         listener = PS4Listener(car_runner)
 
     
