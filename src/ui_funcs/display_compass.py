@@ -4,12 +4,12 @@ import time
 from ..led import Led
 from os import system
 from ..utils import X_Y_Map
-from ..constants import LED_PIN_NUMBER
+from ..constants import LED_PIN
 
 
 def run_display_compass(oled_display:OledDisplay):
     magnetic_sensor = MagneticSensor()
-    led = Led(LED_PIN_NUMBER)
+    led = Led(LED_PIN)
     x_y_map = X_Y_Map(15)
     while True:
         system('clear')

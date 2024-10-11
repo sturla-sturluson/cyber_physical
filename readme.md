@@ -39,4 +39,16 @@ This turns on a non timed slideshow, where you can switch between what is displa
 
     .env
 
-    LED_PIN_NUMBER=26 // Gpio number
+    # The led pin
+    LED_PIN=26
+    # Range sensor pin
+    RANGE_SENSOR_PIN=5
+    # Engine gpio pins
+    AIN1_PIN=20
+    AIN2_PIN=21
+    BIN1_PIN=6
+    BIN2_PIN=13
+    # The motor controller sleep pin
+    SLEEP_PIN=25
+
+

@@ -8,13 +8,35 @@ CONFIG_DIR = Path(_DIR_PATH).expanduser()
 COMPASS_CALIBRATION_FILE_PATH = Path(CONFIG_DIR) / "compass_calibration.json"
 RANGE_CALIBRATION_FILE_PATH = Path(CONFIG_DIR) / "range_calibration.json"
 
-DEFAULT_LED_PIN = 26
+# The led pin
+DEFAULT_LED_PIN=26
+# Range sensor gpio pin
+DEFAULT_RANGE_SENSOR_PIN=5
+# Engine gpio pins
+DEFAULT_AIN1_PIN=20
+DEFAULT_AIN2_PIN=21
+DEFAULT_BIN1_PIN=6
+DEFAULT_BIN2_PIN=13
+# The motor controller sleep pin
+DEFAULT_SLEEP_PIN=25
+
 # Read the .env file for the pin number
 try:
-    LED_PIN_NUMBER = int(os.getenv("LED_PIN_NUMBER", DEFAULT_LED_PIN))
+    LED_PIN = int(os.getenv("LED_PIN", DEFAULT_LED_PIN))
+    RANGE_SENSOR_PIN = int(os.getenv("RANGE_SENSOR_PIN", DEFAULT_RANGE_SENSOR_PIN))
+    AIN1_PIN = int(os.getenv("AIN1_PIN", DEFAULT_AIN1_PIN))
+    AIN2_PIN = int(os.getenv("AIN2_PIN", DEFAULT_AIN2_PIN))
+    BIN1_PIN = int(os.getenv("BIN1_PIN", DEFAULT_BIN1_PIN))
+    BIN2_PIN = int(os.getenv("BIN2_PIN", DEFAULT_BIN2_PIN))
+    SLEEP_PIN = int(os.getenv("SLEEP_PIN", DEFAULT_SLEEP_PIN))
 except ValueError:
-    LED_PIN_NUMBER = DEFAULT_LED_PIN
-
+    LED_PIN = DEFAULT_LED_PIN
+    RANGE_SENSOR_PIN = DEFAULT_RANGE_SENSOR_PIN
+    AIN1_PIN = DEFAULT_AIN1_PIN
+    AIN2_PIN = DEFAULT_AIN2_PIN
+    BIN1_PIN = DEFAULT_BIN1_PIN
+    BIN2_PIN = DEFAULT_BIN2_PIN
+    SLEEP_PIN = DEFAULT_SLEEP_PIN
 
 
 # Motors constants

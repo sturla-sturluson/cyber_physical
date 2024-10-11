@@ -5,7 +5,7 @@ import adafruit_mcp3xxx.mcp3008 as MCP
 from adafruit_mcp3xxx.analog_in import AnalogIn
 from .. import utils as UTILS
 import json
-from ..constants import RANGE_CALIBRATION_FILE_PATH
+from ..constants import RANGE_CALIBRATION_FILE_PATH,RANGE_SENSOR_PIN
 import numpy as np
 
 DEFAULT_DATA = "base_range.json"
@@ -14,7 +14,7 @@ DISTANCES = [10,20,30,40,50,60,70,80,90,100,110,120,130,140,150]
     
 class RangeSensor:
     VOLTAGE_ARR: list[float] = []
-    def __init__(self,gpio_pin_number:int = 5):
+    def __init__(self,gpio_pin_number:int = RANGE_SENSOR_PIN):
         spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
         cs = digitalio.DigitalInOut(UTILS.get_gpio_pin_number(gpio_pin_number))
         mcp = MCP.MCP3008(spi, cs)
