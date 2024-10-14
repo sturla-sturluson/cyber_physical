@@ -10,11 +10,11 @@ class Motors:
     def __init__(self):
         # Turn on the gpio motor pin
         self._turn_motor_controller_on()
-        motor_1_pins = (AIN1_PIN,AIN2_PIN)
-        motor_2_pins = (BIN1_PIN,BIN2_PIN)
+        left_pins = (BIN1_PIN,BIN2_PIN)
+        right_pins = (AIN1_PIN,AIN2_PIN)
 
-        self.motor_1 = Motor(*motor_1_pins,name="Left Motor")
-        self.motor_2 = Motor(*motor_2_pins,name="Right Motor")
+        self.motor_1 = Motor(*left_pins,name="Left Motor")
+        self.motor_2 = Motor(*right_pins,name="Right Motor")
 
     def _turn_motor_controller_on(self):
         GPIO.setmode(GPIO.BCM)
@@ -68,8 +68,8 @@ class Motors:
             return right_motor_speed,left_motor_speed
         turning_adjusted = get_scaled_turning_speed(forward_motion,turning_motion)
         turning_adjusted *= 0.50
-        right_motor_speed += turning_adjusted
-        left_motor_speed -= turning_adjusted
+        right_motor_speed -= turning_adjusted
+        left_motor_speed += turning_adjusted
         right_motor_speed = clamp_speed(right_motor_speed)
         left_motor_speed = clamp_speed(left_motor_speed)
         return right_motor_speed,left_motor_speed

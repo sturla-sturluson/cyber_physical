@@ -12,6 +12,8 @@ from pathlib import Path
 
 
 
+# Class for the infrared sensor
+# GP2Y0A02YK0F
 FILEDIR = Path(__file__).resolve().parent
 DEFAULT_DATA = "base_range.json"
 DEFAULT_DATA = FILEDIR / DEFAULT_DATA

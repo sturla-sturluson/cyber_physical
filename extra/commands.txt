@@ -21,3 +21,16 @@ sudo systemctl start gpclear_gpioio_init.service
 source cpsy/bin/activate
 
 pinout
+
+
+# Connect to bluetooth
+
+bluetoothctl
+
+scan on
+
+# Find the device and copy the id 
+
+once found write
+
+pair <id>
