@@ -8,6 +8,8 @@ import json
 from ..constants import RANGE_CALIBRATION_FILE_PATH,RANGE_SENSOR_PIN
 import numpy as np
 
+# Class for the infrared sensor
+# GP2Y0A02YK0F
 DEFAULT_DATA = "base_range.json"
 
 DISTANCES = [10,20,30,40,50,60,70,80,90,100,110,120,130,140,150]
