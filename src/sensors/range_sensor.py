@@ -7,14 +7,21 @@ from .. import utils as UTILS
 import json
 from ..constants import RANGE_CALIBRATION_FILE_PATH,RANGE_SENSOR_PIN
 import numpy as np
+from ..interfaces import IRangeSensor
+from pathlib import Path
 
+
+
+FILEDIR = Path(__file__).resolve().parent
 DEFAULT_DATA = "base_range.json"
+DEFAULT_DATA = FILEDIR / DEFAULT_DATA
 
 DISTANCES = [10,20,30,40,50,60,70,80,90,100,110,120,130,140,150]
     
-class RangeSensor:
+class RangeSensor(IRangeSensor):
     VOLTAGE_ARR: list[float] = []
     def __init__(self,gpio_pin_number:int = RANGE_SENSOR_PIN):
+        
         spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
         cs = digitalio.DigitalInOut(UTILS.get_gpio_pin_number(gpio_pin_number))
         mcp = MCP.MCP3008(spi, cs)
@@ -54,9 +61,12 @@ class RangeSensor:
         """Loading the calibration data from the json file"""
         try:
             with open(RANGE_CALIBRATION_FILE_PATH) as file:
+            
                 data = json.load(file)
         except FileNotFoundError:
+            print("opening /",DEFAULT_DATA)
             with open(DEFAULT_DATA, "r") as file:
+            
                 data = json.load(file)
         # 10cm to 150cm
         self.VOLTAGE_ARR = []
