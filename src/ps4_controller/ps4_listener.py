@@ -7,7 +7,7 @@ from .ps4_controller import PS4ControllerInput
 from ..sensors import MagneticSensor,RangeSensor
 import datetime as dt
 import time
-
+from ..interfaces import IRangeSensor
 
 def is_off_course(current_heading:int,target_heading:int, dead_zone:int = 5):
     """Returns True if the car is off course"""
@@ -40,6 +40,8 @@ class PS4Listener:
     forward_motion,turning_motion = 0,0
     
     last_print = dt.datetime.now()
+    
+    range_sensor:IRangeSensor
 
     def __init__(self,car_runner:CarRunner):
         self.car_runner = car_runner
@@ -67,8 +69,12 @@ class PS4Listener:
         )
 
         self.mag_sensor = MagneticSensor()
-        self.range_sensor = RangeSensor()
-
+        try:
+            
+            self.range_sensor = RangeSensor()
+        except:
+            self.range_sensor = IRangeSensor()
+            
         self._event_loop()
     
 
