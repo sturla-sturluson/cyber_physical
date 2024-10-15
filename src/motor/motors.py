@@ -63,8 +63,8 @@ class Motors:
         if(abs(turning_motion) < 1): # If turning motion is very low, then we don't turn
             return right_motor_speed,left_motor_speed
         turning_adjusted = self._get_scaled_turning_speed(forward_motion,turning_motion) * 0.75
-        right_motor_speed -= turning_adjusted # If we are turning right, we need to lower the right motor speed
-        left_motor_speed += turning_adjusted  # Same for left motor
+        right_motor_speed += turning_adjusted # If we are turning right, we need to lower the right motor speed
+        left_motor_speed -= turning_adjusted  # Same for left motor
         return clamp_speed(right_motor_speed),clamp_speed(left_motor_speed)
            
     @classmethod
