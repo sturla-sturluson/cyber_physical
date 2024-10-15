@@ -67,96 +67,66 @@ class PS4Listener:
             brake_btn=self.brake_button,
             dead_zone=self.ps_4_axis_dead_zone
         )
-
         self.mag_sensor = MagneticSensor()
-        try:
-            
-            self.range_sensor = RangeSensor()
-        except:
-            self.range_sensor = IRangeSensor()
-            
+        self.range_sensor = RangeSensor()
         self._event_loop()
     
-
     def _event_loop(self):
         while self.running:
             self.clock.tick(self.fps)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-                # If we press triangle, we start auto drive
-                self._toggle_auto_drive(event)
-
+                self._toggle_auto_drive(event)    # If we press triangle, we start auto drive
             self._auto_drive_handler()
             self._manual_control_handler()
-
-            self._print_status()
-
             self._set_speed()
+            self._print_status()
         
     def _manual_control_handler(self):
         """Handles manual control of the car"""
         if(self.is_auto_drive):
             return
-        # Get the controller values
         self.forward_motion,self.turning_motion = self.ps4_input.get_values_from_game(self.joystick)
-        # Setting the speed of the motors
-        #self.motors.set_speed(self.forward_motion,self.turning_motion)
-
 
     def _toggle_auto_drive(self,event:pygame.event.Event):
-        if(self.is_auto_drive):
-            if event.type == pygame.JOYBUTTONDOWN and event.button in [self.auto_drive_button.id,self.brake_button.id]:
+        """Toggles auto drive on and off"""
+        if(self.is_auto_drive 
+           and  event.type == pygame.JOYBUTTONDOWN 
+           and event.button in [self.auto_drive_button.id,self.brake_button.id]):
                 self.is_auto_drive = False
-        else:
-            if event.type == pygame.JOYBUTTONDOWN and event.button == self.auto_drive_button.id:
+        elif event.type == pygame.JOYBUTTONDOWN and event.button == self.auto_drive_button.id:
                 self.is_auto_drive = True
                 self.target_heading = self.mag_sensor.get_angle()
 
-
     def _auto_drive_handler(self):
-        """"""
-        current_heading = self.mag_sensor.get_angle()
-        # calculate how much off course we are 
-        delta = get_heading_difference(current_heading,self.target_heading)
-        # if its less than 2 degrees, we are on course
-        off_course = delta > 2
-        if off_course:
-            # if we are off course, we adjust turning motion
+        """Handles the auto drive"""
+        current_heading = self.mag_sensor.get_angle()         # calculate how much off course we are 
+        delta = get_heading_difference(current_heading,self.target_heading)         
+        turning_motion = 0 
+        if delta > 1:   # if we are off course, we adjust turning motion
             # Turning motion is a range from -100 to 100, max we ever turn is 15 
-            turning_motion = self.target_heading - current_heading
-            turning_motion = clamp_speed(turning_motion,-15,15)
-            self.forward_motion,self.turning_motion = self.target_speed,turning_motion
-        else:
-            # if we are on course, we go straight
-            self.forward_motion,self.turning_motion = self.target_speed,0
-
+            turning_motion = clamp_speed(self.target_heading - current_heading,-15,15)
+        self.forward_motion,self.turning_motion = self.target_speed,turning_motion
 
     def _print_status(self):
         """Prints the status of the motors"""
-        # only print once a second
-        if (dt.datetime.now() - self.last_print).seconds < 0.5:
+        if (dt.datetime.now() - self.last_print).seconds < 0.5:   # only print once a second
             return
         self.last_print = dt.datetime.now()
         os.system('clear')
-        status_str = ""
         # Auto drive on or off
-        status_str += f"Auto Drive: {self.is_auto_drive}\n"
-        # If its on we also add the target heading
-        if self.is_auto_drive:
+        status_str = f"Auto Drive: {self.is_auto_drive}\n"
+        if self.is_auto_drive:         # If its on we also add the target heading
             status_str += f"Target Heading: {self.target_heading}\n"
-        # Current heading
-        angle,x_y,nesw_string = self.mag_sensor.get_data()
+        angle,x_y,nesw_string = self.mag_sensor.get_data()         # Current heading,and nesw string
         status_str += f"Current Heading: {angle}\n"
         status_str += f"Direction: {nesw_string}\n"
-        # The range sensor
-        status_str += f"Range Sensor: {self.range_sensor.get_cm_distance()}\n"
-        # Current speed 
-        left_speed,right_speed = self.car_runner.motor_speeds
+        status_str += f"Range Sensor: {self.range_sensor.get_cm_distance()}\n"         # The range sensor
+        left_speed,right_speed = self.car_runner.motor_speeds         # Current speed 
         status_str += f"Left Speed: {left_speed}\n"
         status_str += f"Right Speed: {right_speed}\n"
-        # Add the controller values
-        status_str += f"Controller Values: {self.forward_motion},{self.turning_motion}\n"
+        status_str += f"Controller Values: {self.forward_motion},{self.turning_motion}\n"         # Add the controller values
         print(status_str)
 
     def _set_speed(self):

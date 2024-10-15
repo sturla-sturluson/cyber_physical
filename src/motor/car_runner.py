@@ -19,10 +19,7 @@ class CarRunner():
     last_stop_range_check = dt.datetime.now()
     display:OledDisplay|None = None
     last_display_time = dt.datetime.now()
-    def __init__(self,
-                 stop_range:int|None = None,
-                 screen_on:bool = False,
-                 ):
+    def __init__(self,stop_range:int|None = None,screen_on:bool = False,):
         self.motors = Motors()
         self.FORWARD_MOTION = 0
         self.TURNING_MOTION = 0
@@ -50,26 +47,11 @@ class CarRunner():
         self.motors.cleanup()
         self.stop_event.set()
 
-    async def run_car(self):
-        # start the display loop
-        # Launch both motor loops in separate threads
-        await self._motor_loop()
-
-
-
     @property
     def motor_speeds(self)->tuple[int,int]:
         """Returns the forward motion of both motors"""
         return self.motors.motor_1.current_speed,self.motors.motor_2.current_speed
     
-    async def _motor_loop(self):
-        # while not self.stop_event.is_set():
-        #     await asyncio.sleep(0.05)   
-        #     self._range_stopper()
-        #     self._update_speeds()
-        #     self._update_display()
-        ...
-
     def _update_display(self):
         """Updates the display"""
         if self.display is None:
@@ -82,7 +64,6 @@ class CarRunner():
         txt_str += f"\nM1: {m1_speed} M2: {m2_speed}"
         self.display.display_text(txt_str)
         self.last_display_time = dt.datetime.now()
-
 
     def _range_stopper(self):
         """Returns boolean if we are within crash range"""
@@ -101,11 +82,13 @@ class CarRunner():
         if self.STOP_FORWARD:
             self.FORWARD_MOTION = min(self.FORWARD_MOTION,0)
         self.motors.set_speed(self.FORWARD_MOTION,self.TURNING_MOTION)
+        self._update_display()
 
     def __enter__(self):
         return self
     
     def __exit__(self, exc_type, exc_value, traceback):
         self.cleanup()
+
 
 

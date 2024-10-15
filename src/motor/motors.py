@@ -8,24 +8,20 @@ class Motors:
     LAST_FORWARD_MOTION:int = 0
     LAST_TURNING_MOTION:int = 0
     def __init__(self):
-        # Turn on the gpio motor pin
         self._turn_motor_controller_on()
         left_pins = (BIN1_PIN,BIN2_PIN)
         right_pins = (AIN1_PIN,AIN2_PIN)
-
         self.motor_1 = Motor(*left_pins,name="Left Motor")
         self.motor_2 = Motor(*right_pins,name="Right Motor")
 
     def _turn_motor_controller_on(self):
+        """Setting power to high to turn on the motor controller"""
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(SLEEP_PIN, GPIO.OUT)
-        # Set to 
+        GPIO.setup(SLEEP_PIN, GPIO.OUT) 
         GPIO.output(SLEEP_PIN, GPIO.HIGH)
 
-    def __enter__(self):
-        return self
-    
     def motor_stop(self):
+        """Stops the motors"""
         self.motor_1.motor_stop()
         self.motor_2.motor_stop()      
         
@@ -64,27 +60,25 @@ class Motors:
         # If we are going backwards , turning motion is positive we are also turning right
         # This way we know if turning right, always lower the right motor speed and vice versa
         right_motor_speed,left_motor_speed = forward_motion,forward_motion
-        if(abs(turning_motion) < 1):
+        if(abs(turning_motion) < 1): # If turning motion is very low, then we don't turn
             return right_motor_speed,left_motor_speed
-        turning_adjusted = get_scaled_turning_speed(forward_motion,turning_motion)
-        turning_adjusted *= 0.50
-        right_motor_speed -= turning_adjusted
-        left_motor_speed += turning_adjusted
-        right_motor_speed = clamp_speed(right_motor_speed)
-        left_motor_speed = clamp_speed(left_motor_speed)
-        return right_motor_speed,left_motor_speed
-        
-
-
-    
+        turning_adjusted = self._get_scaled_turning_speed(forward_motion,turning_motion) * 0.75
+        right_motor_speed -= turning_adjusted # If we are turning right, we need to lower the right motor speed
+        left_motor_speed += turning_adjusted  # Same for left motor
+        return clamp_speed(right_motor_speed),clamp_speed(left_motor_speed)
+           
+    @classmethod
+    def _get_scaled_turning_speed(cls,forward_motion:int,turning_motion:int):
+        """Scales the turning motion based on the forward motion"""
+        return int(forward_motion * (turning_motion/100))
 
     def __str__(self) -> str:
         return f"{self.motor_1}\n{self.motor_2}"
+    
+    def __enter__(self):
+        return self
     
     def __exit__(self, exc_type, exc_value, traceback):
         self.cleanup()
 
 
-
-def get_scaled_turning_speed(forward_motion:int,turning_motion:int):
-    return int(forward_motion * (turning_motion/100))
