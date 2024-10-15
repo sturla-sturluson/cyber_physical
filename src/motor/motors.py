@@ -11,8 +11,8 @@ class Motors:
         self._turn_motor_controller_on()
         left_pins = (BIN1_PIN,BIN2_PIN)
         right_pins = (AIN1_PIN,AIN2_PIN)
-        self.motor_1 = Motor(*left_pins,name="Left Motor")
-        self.motor_2 = Motor(*right_pins,name="Right Motor")
+        self.left_motor = Motor(*left_pins,name="Left Motor")
+        self.right_motor = Motor(*right_pins,name="Right Motor")
 
     def _turn_motor_controller_on(self):
         """Setting power to high to turn on the motor controller"""
@@ -22,13 +22,13 @@ class Motors:
 
     def motor_stop(self):
         """Stops the motors"""
-        self.motor_1.motor_stop()
-        self.motor_2.motor_stop()      
+        self.left_motor.motor_stop()
+        self.right_motor.motor_stop()      
         
     def cleanup(self):
         print("Cleaning up Motors")
-        self.motor_1.cleanup()
-        self.motor_2.cleanup()
+        self.left_motor.cleanup()
+        self.right_motor.cleanup()
 
     # Overload the set_speed method
     def set_speed(self,forward_motion:int,turning_motion:int = 0):
@@ -43,8 +43,8 @@ class Motors:
         
         if(abs(turning_motion) > 1):
             left_engine_speed,right_engine_speed = self._calculate_turning_motion_values(forward_motion,turning_motion)
-        self.motor_1.set_speed(left_engine_speed)
-        self.motor_2.set_speed(right_engine_speed)
+        self.left_motor.set_speed(left_engine_speed)
+        self.right_motor.set_speed(right_engine_speed)
 
     def _check_update(self,forward_motion:int,turning_motion:int):
         """Checks if we need to update the motors"""
@@ -73,7 +73,7 @@ class Motors:
         return int(forward_motion * (turning_motion/100))
 
     def __str__(self) -> str:
-        return f"{self.motor_1}\n{self.motor_2}"
+        return f"{self.left_motor}\n{self.right_motor}"
     
     def __enter__(self):
         return self

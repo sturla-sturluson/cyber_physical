@@ -50,7 +50,7 @@ class CarRunner():
     @property
     def motor_speeds(self)->tuple[int,int]:
         """Returns the forward motion of both motors"""
-        return self.motors.motor_1.current_speed,self.motors.motor_2.current_speed
+        return self.motors.left_motor.current_speed,self.motors.right_motor.current_speed
     
     def _update_display(self):
         """Updates the display"""

@@ -23,6 +23,7 @@ pillow==10.4.0
 pyftdi==0.55.4
 pygame==2.6.1
 pyserial==3.5
+python-dotenv==1.0.1
 python-xlib==0.33
 pyusb==1.2.1
 rpi-ws281x==5.0.0
