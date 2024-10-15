@@ -26,13 +26,13 @@ DEFAULT_SLEEP_PIN=25
 
 # Read the .env file for the pin number
 
-LED_PIN = int(os.getenv("LED_PIN", None))
-RANGE_SENSOR_PIN = int(os.getenv("RANGE_SENSOR_PIN", None))
-AIN1_PIN = int(os.getenv("AIN1_PIN", None))
-AIN2_PIN = int(os.getenv("AIN2_PIN", None))
-BIN1_PIN = int(os.getenv("BIN1_PIN", None))
-BIN2_PIN = int(os.getenv("BIN2_PIN", None))
-SLEEP_PIN = int(os.getenv("SLEEP_PIN", None))
+LED_PIN = int(os.getenv("LED_PIN", DEFAULT_LED_PIN))
+RANGE_SENSOR_PIN = int(os.getenv("RANGE_SENSOR_PIN", DEFAULT_RANGE_SENSOR_PIN ))
+AIN1_PIN = int(os.getenv("AIN1_PIN", DEFAULT_AIN1_PIN ))
+AIN2_PIN = int(os.getenv("AIN2_PIN", DEFAULT_AIN2_PIN ))
+BIN1_PIN = int(os.getenv("BIN1_PIN", DEFAULT_BIN1_PIN ))
+BIN2_PIN = int(os.getenv("BIN2_PIN", DEFAULT_BIN2_PIN ))
+SLEEP_PIN = int(os.getenv("SLEEP_PIN", DEFAULT_SLEEP_PIN) )
 print("PINS USED:")
 for pin_name,pin in zip(["LED_PIN","RANGE_SENSOR_PIN","AIN1_PIN","AIN2_PIN","BIN1_PIN","BIN2_PIN","SLEEP_PIN"],[LED_PIN,RANGE_SENSOR_PIN,AIN1_PIN,AIN2_PIN,BIN1_PIN,BIN2_PIN,SLEEP_PIN]):
     print(f"{pin_name}: {pin}")
