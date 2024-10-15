@@ -59,9 +59,30 @@ class Motors:
         # If we are going forward, and turning motion is positive, we are turning right
         # If we are going backwards , turning motion is positive we are also turning right
         # This way we know if turning right, always lower the right motor speed and vice versa
-        right_motor_speed,left_motor_speed = forward_motion,forward_motion
         if(abs(turning_motion) < 1): # If turning motion is very low, then we don't turn
-            return right_motor_speed,left_motor_speed
+            return forward_motion,forward_motion
+        return self._get_average_turning_values(forward_motion,turning_motion)
+        
+
+    def _get_hard_turning_values(self,forward_motion:int,turning_motion:int):
+        """Returns very aggressive turning values"""
+        turning_motion *= 2
+        right_motor_speed,left_motor_speed = forward_motion,forward_motion
+        # If turning speed is 50 and forward speed is 100, then we need to lower the right motor speed to 0
+        right_motor_speed += turning_motion # If we are turning right, we need to lower the right motor speed
+        left_motor_speed -= turning_motion  # Same for left motor
+        return clamp_speed(right_motor_speed),clamp_speed(left_motor_speed)
+    
+    def _get_average_turning_values(self,forward_motion:int,turning_motion:int):
+        """Returns very aggressive turning values"""
+        right_motor_speed,left_motor_speed = forward_motion,forward_motion
+        right_motor_speed += turning_motion # If we are turning right, we need to lower the right motor speed
+        left_motor_speed -= turning_motion  # Same for left motor
+        return clamp_speed(right_motor_speed),clamp_speed(left_motor_speed)
+
+    def _get_soft_turning_values(self,forward_motion:int,turning_motion:int):
+        """Returns a soft turning"""
+        right_motor_speed,left_motor_speed = forward_motion,forward_motion
         turning_adjusted = self._get_scaled_turning_speed(forward_motion,turning_motion) * 0.75
         right_motor_speed += turning_adjusted # If we are turning right, we need to lower the right motor speed
         left_motor_speed -= turning_adjusted  # Same for left motor
