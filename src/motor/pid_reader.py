@@ -6,14 +6,14 @@ import asyncio
 import threading
 
 
-class PID_Controller:
+class PID_READER:
     ppr = 700  # Pulses Per Revolution of the encoder
 
 
 
     def __init__(self,c1_pin:int,c2_pin:int):
         self.encoder = RotaryEncoder(c1_pin, c2_pin, max_steps=0)
-        self.tsample = 0.02  # Sampling period for code execution (s)
+        self.tsample = 0.1  # Sampling period for code execution (s)
         # How many samples get stored per 10 seconds
         self.sample_time_range = 1
         self.angle_samples = int(self.sample_time_range / self.tsample)
@@ -49,7 +49,7 @@ class PID_Controller:
 
     def _get_sample(self,index:int,up:bool)->float:
         """Returns a sample of the angle array, +- range/2"""
-        slice_range = 5
+        slice_range = 2
         if(up):
             bottom = index
             top = index + slice_range
@@ -73,9 +73,6 @@ class PID_Controller:
         # Normalize the angle diff to 0-360
         # One RPM is 360° in 60 seconds
         minute_angle = angle_diff / self.sample_time_range * 60
-        print("Delta Angle:",angle_diff)
-        print("Minute Angle:",minute_angle)
-        # RPM
         return minute_angle // 360
 
     
@@ -92,6 +89,9 @@ class PID_Controller:
         return self
     
     def __exit__(self,exc_type,exc_value,traceback):
-        self.running = False
+        self.cleanup()
+
+    def cleanup(self):
+        """Cleans up the PID Controller"""
         self.encoder.close()
         print("Exiting PID Controller")

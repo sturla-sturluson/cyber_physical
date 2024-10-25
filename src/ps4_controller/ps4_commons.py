@@ -37,6 +37,14 @@ ps4_axis = {
     5: {"name":"R2","min":-1,"max":1,"released":-1},
 }
 
+ALL_JOY_EVENTS = [
+    # pygame.JOYAXISMOTION,
+    pygame.JOYBALLMOTION,
+    pygame.JOYBUTTONDOWN,
+    pygame.JOYBUTTONUP,
+    pygame.JOYHATMOTION,
+]
+
 
 def button_id_tester():
     pygame.init()
@@ -53,6 +61,8 @@ def button_id_tester():
 
         clock.tick(fps)
         for event in pygame.event.get():
+            if event.type in ALL_JOY_EVENTS:
+                print(f"Event : {event}")
             if event.type == pygame.QUIT:
                 running = False
             if( event.type == pygame.JOYBUTTONDOWN):

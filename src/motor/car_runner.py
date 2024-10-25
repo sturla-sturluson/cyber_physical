@@ -16,7 +16,7 @@ class CarRunner():
     # This is the range that any forward motion will be set to 0
     STOP_RANGE:int = 40 # in cm
     STOP_FORWARD:bool = False
-
+    MAX_SPEED:int
     RANGE_INTERVAL_CHECKER:dt.timedelta = dt.timedelta(milliseconds=500)
     last_stop_range_check = dt.datetime.now()
     display:OledDisplay|None = None
@@ -24,6 +24,7 @@ class CarRunner():
 
     def __init__(self,stop_range:int|None = None,screen_on:bool = False,max_speed:int = MAX_SPEED):
         self.motors = Motors(max_speed)
+        self.MAX_SPEED = max_speed
         self.FORWARD_MOTION = 0
         self.TURNING_MOTION = 0
         if stop_range is not None:
@@ -33,6 +34,11 @@ class CarRunner():
             self.display = OledDisplay()    
         # Create a stop event and ui event
         self.stop_event = threading.Event()
+
+    def set_max_speed(self,max_speed:int)->None:
+        """Updates the speed ceiling"""
+        self.MAX_SPEED = max(max_speed,10) # Min speed is still 10
+        self.motors.set_max_speed(max_speed)
 
     def set_turning_level(self,turning_level:TurningLevel):
         """Sets the turning level of the car"""
@@ -58,6 +64,7 @@ class CarRunner():
     def motor_speeds(self)->tuple[int,int]:
         """Returns the forward motion of both motors"""
         return self.motors.left_motor.current_speed,self.motors.right_motor.current_speed
+    
     
     def _update_display(self):
         """Updates the display"""
@@ -90,6 +97,13 @@ class CarRunner():
             self.FORWARD_MOTION = min(self.FORWARD_MOTION,0)
         self.motors.set_speed(self.FORWARD_MOTION,self.TURNING_MOTION)
         self._update_display()
+
+
+    def __str__(self) -> str:
+        ret_str = "Car Runner\n"
+        ret_str += f"Forward Motion: {self.FORWARD_MOTION} Turning Motion: {self.TURNING_MOTION}\n"
+        ret_str += str(self.motors)
+        return ret_str
 
     def __enter__(self):
         return self

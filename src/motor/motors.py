@@ -1,6 +1,6 @@
 from . import Motor
 from ..utils import clamp_speed
-from ..constants import SLEEP_PIN,AIN1_PIN,AIN2_PIN,BIN1_PIN,BIN2_PIN,MAX_SPEED
+from ..constants import SLEEP_PIN,AIN1_PIN,AIN2_PIN,BIN1_PIN,BIN2_PIN,MAX_SPEED,A_C1_PIN,A_C2_PIN,B_C1_PIN,B_C2_PIN
 import RPi.GPIO as GPIO
 from ..enums import TurningLevel
 
@@ -11,8 +11,8 @@ class Motors:
 
     def __init__(self,max_speed:int = MAX_SPEED):
         self._turn_motor_controller_on()
-        left_pins = (BIN1_PIN,BIN2_PIN)
-        right_pins = (AIN1_PIN,AIN2_PIN)
+        left_pins = (BIN1_PIN,BIN2_PIN,B_C2_PIN,B_C1_PIN) # This is reversed on purpose
+        right_pins = (AIN1_PIN,AIN2_PIN,A_C1_PIN,A_C2_PIN)
         self.left_motor = Motor(*left_pins,name="Left Motor",max_speed=max_speed)
         self.right_motor = Motor(*right_pins,name="Right Motor",max_speed=max_speed)
         self.turning_level = TurningLevel.MEDIUM
@@ -45,6 +45,11 @@ class Motors:
         print("Cleaning up Motors")
         self.left_motor.cleanup()
         self.right_motor.cleanup()
+
+    def set_max_speed(self,max_speed:int)->None:
+        """Updates the speed ceiling"""
+        self.left_motor.set_max_speed(max_speed)
+        self.right_motor.set_max_speed(max_speed)
 
     # Overload the set_speed method
     def set_speed(self,forward_motion:int,turning_motion:int = 0):
@@ -117,5 +122,6 @@ class Motors:
     
     def __exit__(self, exc_type, exc_value, traceback):
         self.cleanup()
+
 
 

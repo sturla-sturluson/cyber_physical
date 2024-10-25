@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 from ..constants import MAX_SPEED, MIN_SPEED, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
 from ..utils import get_duty_cycle_values_from_speed,clamp_speed
+from .pid_reader import PID_READER
 
 class Motor:
     NAME:str = "Motor"
@@ -9,10 +10,16 @@ class Motor:
 
     MAX_SPEED:int
 
-    def __init__(self,gpio_in_1:int,gpio_in_2:int,name:str="Motor",max_speed:int = MAX_SPEED):
+    def __init__(self,
+                 gpio_in_1:int,gpio_in_2:int,
+                 c_gpio_1:int,c_gpio_2:int,
+                 name:str="Motor",
+                 max_speed:int = MAX_SPEED):
         self.gpio_in_1 = gpio_in_1
         self.gpio_in_2 = gpio_in_2
         GPIO.setmode(GPIO.BCM)
+
+        self.pidreader = PID_READER(c_gpio_1,c_gpio_2)
 
         self.NAME = name
         # Set up GPIO pins
@@ -27,6 +34,7 @@ class Motor:
 
         self.MAX_SPEED = max_speed
 
+        self.pidreader.start()
         self._set_duty_cycle()
 
     def __enter__(self):
@@ -39,7 +47,13 @@ class Motor:
         """Cleans up the motor"""
         print(f"Cleaning up {self.NAME}")
         GPIO.cleanup()
+        self.pidreader.cleanup()
         self.motor_stop()
+
+    def set_max_speed(self,max_speed:int)->None:
+        """Updates the speed ceiling"""
+        # Hard low is 10, hard max is 100
+        self.MAX_SPEED = clamp_speed(max_speed,10,100)
 
     def motor_stop(self):
         """Stops the motor"""
@@ -70,4 +84,4 @@ class Motor:
         return 0
 
     def __str__(self) -> str:
-        return f"{self.NAME}: {self.current_speed}"
+        return f"{self.NAME}: {self.current_speed} Angle: {int(self.pidreader.angle)} RPM: {int(self.pidreader.rpm)}"
