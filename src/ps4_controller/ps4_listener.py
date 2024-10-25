@@ -8,6 +8,7 @@ from ..sensors import MagneticSensor,RangeSensor
 import datetime as dt
 import time
 from ..interfaces import IRangeSensor
+from ..enums import TurningLevel
 
 def is_off_course(current_heading:int,target_heading:int, dead_zone:int = 5):
     """Returns True if the car is off course"""
@@ -36,12 +37,16 @@ class PS4Listener:
     # Left and right motion
     turn_button:PS4Button = PS4Button("Axis",id=0,name="Left Stick X",released=0,min=-1,max=1)
 
+    turning_level_button:PS4Button = PS4Button("Button",id=1,name="Circle",released=0)
+
     # Current motions
     forward_motion,turning_motion = 0,0
     
     last_print = dt.datetime.now()
     
     range_sensor:IRangeSensor
+
+    TURNING_LEVELS = [TurningLevel.SOFT,TurningLevel.MEDIUM,TurningLevel.HARD]
 
     def __init__(self,car_runner:CarRunner):
         self.car_runner = car_runner
@@ -77,7 +82,10 @@ class PS4Listener:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-                self._toggle_auto_drive(event)    # If we press triangle, we start auto drive
+                # If we press triangle, we start auto drive
+                self._toggle_auto_drive(event)    
+                # If we press circle, we change the turning level
+                self._change_turning_level(event)
             self._auto_drive_handler()
             self._manual_control_handler()
             self._set_speed()
@@ -88,6 +96,13 @@ class PS4Listener:
         if(self.is_auto_drive):
             return
         self.forward_motion,self.turning_motion = self.ps4_input.get_values_from_game(self.joystick)
+
+    def _change_turning_level(self,event:pygame.event.Event):
+        if(event.type == pygame.JOYBUTTONDOWN and event.button == self.turning_level_button.id):
+            current_level = self.car_runner.motors.turning_level
+            index = self.TURNING_LEVELS.index(current_level)
+            index = (index + 1) % len(self.TURNING_LEVELS)
+            self.car_runner.set_turning_level(self.TURNING_LEVELS[index])
 
     def _toggle_auto_drive(self,event:pygame.event.Event):
         """Toggles auto drive on and off"""

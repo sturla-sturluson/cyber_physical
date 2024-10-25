@@ -8,6 +8,7 @@ from .. constants import MAX_SPEED, MIN_SPEED, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
 from ..utils.common import clamp_speed
 from ..sensors import RangeSensor
 from ..display import OledDisplay
+from ..enums import TurningLevel
 
 class CarRunner():
     FORWARD_MOTION:int
@@ -15,12 +16,14 @@ class CarRunner():
     # This is the range that any forward motion will be set to 0
     STOP_RANGE:int = 40 # in cm
     STOP_FORWARD:bool = False
+
     RANGE_INTERVAL_CHECKER:dt.timedelta = dt.timedelta(milliseconds=500)
     last_stop_range_check = dt.datetime.now()
     display:OledDisplay|None = None
     last_display_time = dt.datetime.now()
-    def __init__(self,stop_range:int|None = None,screen_on:bool = False,):
-        self.motors = Motors()
+
+    def __init__(self,stop_range:int|None = None,screen_on:bool = False,max_speed:int = MAX_SPEED):
+        self.motors = Motors(max_speed)
         self.FORWARD_MOTION = 0
         self.TURNING_MOTION = 0
         if stop_range is not None:
@@ -30,6 +33,10 @@ class CarRunner():
             self.display = OledDisplay()    
         # Create a stop event and ui event
         self.stop_event = threading.Event()
+
+    def set_turning_level(self,turning_level:TurningLevel):
+        """Sets the turning level of the car"""
+        self.motors.set_turning_level(turning_level)
         
     def motor_stop(self):
         """Stops the motors"""

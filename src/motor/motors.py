@@ -1,18 +1,34 @@
 from . import Motor
 from ..utils import clamp_speed
-from ..constants import SLEEP_PIN,AIN1_PIN,AIN2_PIN,BIN1_PIN,BIN2_PIN
+from ..constants import SLEEP_PIN,AIN1_PIN,AIN2_PIN,BIN1_PIN,BIN2_PIN,MAX_SPEED
 import RPi.GPIO as GPIO
+from ..enums import TurningLevel
 
 class Motors:
     ERROR_RATE = 0.005 # Change in speed to update the motors
     LAST_FORWARD_MOTION:int = 0
     LAST_TURNING_MOTION:int = 0
-    def __init__(self):
+
+    def __init__(self,max_speed:int = MAX_SPEED):
         self._turn_motor_controller_on()
         left_pins = (BIN1_PIN,BIN2_PIN)
         right_pins = (AIN1_PIN,AIN2_PIN)
-        self.left_motor = Motor(*left_pins,name="Left Motor")
-        self.right_motor = Motor(*right_pins,name="Right Motor")
+        self.left_motor = Motor(*left_pins,name="Left Motor",max_speed=max_speed)
+        self.right_motor = Motor(*right_pins,name="Right Motor",max_speed=max_speed)
+        self.turning_level = TurningLevel.MEDIUM
+
+    def set_turning_level(self,turning_level:TurningLevel):
+        """Sets the turning level of the car"""
+        self.turning_level = turning_level
+
+    @property
+    def _turning_function(self) -> callable:
+        """Returns the turning function based on the turning level"""
+        if self.turning_level == TurningLevel.HARD:
+            return self._get_hard_turning_values
+        if self.turning_level == TurningLevel.SOFT:
+            return self._get_soft_turning_values
+        return self._get_average_turning_values
 
     def _turn_motor_controller_on(self):
         """Setting power to high to turn on the motor controller"""
@@ -61,7 +77,7 @@ class Motors:
         # This way we know if turning right, always lower the right motor speed and vice versa
         if(abs(turning_motion) < 1): # If turning motion is very low, then we don't turn
             return forward_motion,forward_motion
-        return self._get_average_turning_values(forward_motion,turning_motion)
+        return self._turning_function(forward_motion,turning_motion)
         
 
     def _get_hard_turning_values(self,forward_motion:int,turning_motion:int):
