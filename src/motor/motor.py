@@ -1,14 +1,28 @@
 import RPi.GPIO as GPIO
 from ..constants import MAX_SPEED, MIN_SPEED, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
 from ..utils import get_duty_cycle_values_from_speed,clamp_speed
-from .pid_reader import PID_READER
+from .phase_reader import PhaseReader
+import time
+import threading
 
 class Motor:
     NAME:str = "Motor"
     FORWARD:int = 0
     BACKWARD:int = 0
-
     MAX_SPEED:int
+    SAMPLES_PER_SECOND:int = 5
+    tsample:float = 1/SAMPLES_PER_SECOND
+
+    target_rpm:int = 0
+    # PID Parameters
+    # Proportional, used to correct the error
+    Kp:float = 1.0 
+    # Integral, used to correct the error over time
+    Ki:float = 0.5 
+    # Derivative, used to predict the error
+    Kd:float = 0.05  
+
+    previous_error:float = 0
 
     def __init__(self,
                  gpio_in_1:int,gpio_in_2:int,
@@ -19,7 +33,6 @@ class Motor:
         self.gpio_in_2 = gpio_in_2
         GPIO.setmode(GPIO.BCM)
 
-        self.pidreader = PID_READER(c_gpio_1,c_gpio_2)
 
         self.NAME = name
         # Set up GPIO pins
@@ -34,21 +47,33 @@ class Motor:
 
         self.MAX_SPEED = max_speed
 
-        self.pidreader.start()
         self._set_duty_cycle()
 
-    def __enter__(self):
-        return self
+        self.pidreader = PhaseReader(c_gpio_1,c_gpio_2)
+        self.listen_event = threading.Event()
+        self.listen_thread = threading.Thread(target=self._listener)
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.cleanup()
+    def start(self):
+        """Starts the motor"""
+        self.listen_event.set()
+        self.listen_thread.start()
 
-    def cleanup(self):
-        """Cleans up the motor"""
-        print(f"Cleaning up {self.NAME}")
-        GPIO.cleanup()
-        self.pidreader.cleanup()
-        self.motor_stop()
+    def _listener(self):
+        """Listens for the encoder"""
+        while self.listen_event.is_set():
+            time.sleep(self.tsample)
+            curr_speed = self.pidreader.rpm
+            error = self.target_rpm - curr_speed
+            # PID
+            proportional = self.Kp * error
+            integral = self.Ki * error
+            derivative = self.Kd * (error - self.previous_error)
+
+            control_signal = proportional + integral + derivative
+
+            self.set_speed(int(control_signal))
+
+            self.previous_error = error
 
     def set_max_speed(self,max_speed:int)->None:
         """Updates the speed ceiling"""
@@ -66,7 +91,21 @@ class Motor:
         ain_1,ain_2 = get_duty_cycle_values_from_speed(value)
         self.FORWARD = ain_1
         self.BACKWARD = ain_2
-        self._set_duty_cycle()
+        self._set_duty_cycle() 
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.cleanup()
+
+    def cleanup(self):
+        """Cleans up the motor"""
+        print(f"Cleaning up {self.NAME}")
+        GPIO.cleanup()
+        self.pidreader.cleanup()
+        self.motor_stop()
+
 
 
     def _set_duty_cycle(self):
@@ -75,7 +114,7 @@ class Motor:
         self.pwm_AIN2.ChangeDutyCycle(clamp_speed(self.BACKWARD,0,self.MAX_SPEED))
 
     @property
-    def current_speed(self):
+    def current_power(self):
         """Returns current speed from -100 to 100"""
         if(self.FORWARD > 0):
             return self.FORWARD
@@ -84,4 +123,4 @@ class Motor:
         return 0
 
     def __str__(self) -> str:
-        return f"{self.NAME}: {self.current_speed} Angle: {int(self.pidreader.angle)} RPM: {int(self.pidreader.rpm)}"
+        return f"{self.NAME}: {self.current_power} Angle: {int(self.pidreader.angle)} RPM: {int(self.pidreader.rpm)}"
