@@ -1,7 +1,7 @@
 import time
 import RPi.GPIO as GPIO
-from adafruit_tcs34725 import TCS34725
 from src.motor import Motors, CarRunner
+from src.sensors.rgb_sensor import RgbSensor  # Import RgbSensor
 
 # Setup GPIO for motors
 GPIO.setmode(GPIO.BCM)
@@ -9,7 +9,7 @@ GPIO.setmode(GPIO.BCM)
 # Initialize motor driver and color sensor
 motors = Motors()
 car_runner = CarRunner()
-color_sensor = TCS34725()  # Initialize color sensor with your specific bus
+color_sensor = RgbSensor()  # Initialize RgbSensor
 IR_SENSOR_PIN = 4  # GPIO pin connected to IR sensor
 GPIO.setup(IR_SENSOR_PIN, GPIO.IN)
 
@@ -19,27 +19,28 @@ COLOR_TOLERANCE = {"red": 15, "green": 15, "blue": 15}
 
 # Movement functions
 def stop():
-    car_runner.motor_stop()
+    motors.stop()
 
 def move_forward():
-    car_runner.set_speed(forward_motion=20)  # Adjust speed for slow precision
+    motors.move_forward()
 
 def turn_left():
-    car_runner.set_speed(forward_motion=20, turning_motion=-20)
+    motors.turn_left()
 
 def turn_right():
-    car_runner.set_speed(forward_motion=20, turning_motion=20)
+    motors.turn_right()
 
 # Helper function to check if color is within target color range
 def is_on_target_line():
-    color = color_sensor.color_raw
-    return (TARGET_COLOR["red"] - COLOR_TOLERANCE["red"] <= color.red <= TARGET_COLOR["red"] + COLOR_TOLERANCE["red"] and
-            TARGET_COLOR["green"] - COLOR_TOLERANCE["green"] <= color.green <= TARGET_COLOR["green"] + COLOR_TOLERANCE["green"] and
-            TARGET_COLOR["blue"] - COLOR_TOLERANCE["blue"] <= color.blue <= TARGET_COLOR["blue"] + COLOR_TOLERANCE["blue"])
+    rgb = color_sensor.get_rgb()
+    return all(
+        abs(rgb[i] - TARGET_COLOR[color]) <= COLOR_TOLERANCE[color]
+        for i, color in enumerate(["red", "green", "blue"])
+    )
 
 # Helper function to check boundary
 def is_near_boundary():
-    return GPIO.input(IR_SENSOR_PIN) == GPIO.LOW  # Adjust based on IR sensor's active state
+    return GPIO.input(IR_SENSOR_PIN) == GPIO.LOW
 
 # Main loop
 try:
