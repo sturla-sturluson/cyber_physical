@@ -16,18 +16,18 @@ try:
         data = sock.recv(1024).decode('utf-8')  # Receiving command from the lead car
         if data:
             if data == "forward":
-                motors.set_throttle(0.5, 0.5)  # Adjust as needed
+                motors.set_speed(0.5, 0.5)  # Adjust as needed
             elif data == "left":
-                motors.set_throttle(0.3, 0.5)
+                motors.set_speed(0.3, 0.5)
             elif data == "right":
-                motors.set_throttle(0.5, 0.3)
+                motors.set_speed(0.5, 0.3)
             elif data == "stop":
-                motors.set_throttle(0, 0)
+                motors.set_speed(0, 0)
             else:
                 print("Unknown command:", data)
         time.sleep(0.1)  # Adjust delay as needed
 
 except KeyboardInterrupt:
     sock.close()
-    motors.set_throttle(0, 0)
+    motors.set_speed(0, 0)
     print("Connection closed, car stopped.")
