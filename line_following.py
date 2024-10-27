@@ -19,16 +19,16 @@ COLOR_TOLERANCE = {"red": 15, "green": 15, "blue": 15}
 
 # Movement functions
 def stop():
-    motors.stop()
+    motors.set_speed(0, 0)
 
 def move_forward():
-    motors.move_forward()
+    motors.set_speed(0.5, 0.5) 
 
 def turn_left():
-    motors.turn_left()
+    motors.set_speed(0.3, 0.5)
 
 def turn_right():
-    motors.turn_right()
+    motors.set_speed(0.5, 0.3)
 
 # Helper function to check if color is within target color range
 def is_on_target_line():
