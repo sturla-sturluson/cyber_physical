@@ -4,7 +4,9 @@ from src.constants import AIN1_PIN,AIN2_PIN,BIN1_PIN,BIN2_PIN
 import pygame
 import os
 import asyncio
+import threading
 import argparse
+import time
 
 MAX_SPEED_FLAG = "speed"
 STOP_RANGE_FLAG = "range"
@@ -28,6 +30,12 @@ def main():
         ) as car_runner:
 
         listener = PS4Listener(car_runner)
+        # Launch the start thread
+        threading.Thread(target=listener.start).start() 
+        while True:
+            os.system("clear")
+            print(listener)
+            time.sleep(0.5)
 
     
 

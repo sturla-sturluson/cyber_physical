@@ -31,23 +31,9 @@ class PhaseReader:
             )
 
         self.tsample =  1/self.UPDATES_PER_SECOND
-        # How many samples get stored per 10 seconds
-        # self.sample_time_range = 1
-        # self.angle_samples = int(self.sample_time_range / self.tsample)
-
-        # self.angle_arr_index = 0
-        # self.angle_arr:list[int] = [0 for _ in range(self.angle_samples)]
-
-        # self.angle_curr:int = 0
-        # self.tprev = 0
-        # self.tcurr = 0
-        # self.tstart = time.perf_counter()
-
         self.rpm_queue_size = 20
-        self.rpm_queue = queue.Queue()
+        self.rpm_queue = list()
 
-        self.listen_event = threading.Event()
-        self.listen_thread = threading.Thread(target=self._listener)
 
         self.last_pulse_time = time.perf_counter()
 
@@ -57,6 +43,9 @@ class PhaseReader:
 
     def start(self):
         """Starts the encoder reading in a separate thread"""
+        self.listen_event = threading.Event()
+        self.listen_thread = threading.Thread(target=self._listener)
+
         self.listen_event.set()
         if not self.listen_thread.is_alive():
             self.listen_thread.start()
@@ -71,80 +60,51 @@ class PhaseReader:
         while self.listen_event.is_set():
             time.sleep(self.tsample)
             self._set_rpm_buffer_smoothing()
+            # print(self)
 
     def _pulse_detected(self):
         """Callback for each encoder pulse to calculate frequency-based RPM"""
         current_time = time.perf_counter()
-        
         # Calculate time difference (interval) between pulses
         time_interval = current_time - self.last_pulse_time
         self.last_pulse_time = current_time  # Update last pulse time
-
-        # Calculate RPM from time interval
-        if time_interval > 0:  # Avoid division by zero
-            self._curr_rpm = 60 / time_interval
-
-
-    # def _listener(self):
-    #     """Threaded listener to periodically sample the encoder position"""
-    #     while self.listen_event.is_set():
-    #         self.reading()
-    #         time.sleep(self.tsample)  # Sleep between samples
-
-    # def reading(self):
-    #     """Performs the reading of the encoder"""
-    #     self.tprev = self.tcurr
-    #     self.tcurr = time.perf_counter() - self.tstart
-    #     self.angle_arr_index = (self.angle_arr_index + 1) % self.angle_samples
-    #     self.angle_curr = -int(360 / self.ppr * self.encoder.steps)
-    #     self.angle_arr[self.angle_arr_index] = self.angle_curr
-    #     # Calculate the RPM
-    #     self._set_rpm_buffer_smoothing()
-    #     # self._set_rpm_ema_smoothing()
+        # since its 700 pulses per revolution, we divide by 700
+        # print(time_interval)
+        self._curr_rpm = 60/(time_interval) / self.PPR
 
     def _set_rpm_buffer_smoothing(self):
         """Returns the RPM with buffer smoothing
         Buffer smoothing uses a queue to store the last n RPM readings,
         then calculates the average of the last n readings.
         """
+        curr_time = time.perf_counter()
+        # if its been more than 250ms since the last pulse, we set the rpm to 0
+        if(self._curr_rpm == 0):
+            self.curr_rpm = 0
+            return
+        if self.last_pulse_time + 0.50 < curr_time:
+            self.rpm_queue = list()
+            if(self._curr_rpm < 5):
+                self._curr_rpm = 0
+                self.curr_rpm = 0
+            else:
+                self.curr_rpm = self.curr_rpm * 0.9
+                # self.last_pulse_time = curr_time
+            return
         curr_rpm = self._curr_rpm
-        self.rpm_queue.put(curr_rpm)
-        if self.rpm_queue.qsize() > self.rpm_queue_size:
-            self.rpm_queue.get()
-        self.curr_rpm = np.mean(list(self.rpm_queue.queue))
-
-
-    # def _set_rpm_ema_smoothing(self):
-    #     """Returns the RPM with exponential moving average smoothing
-    #     Exponential Moving Average (EMA), which provides a weighted average of past RPM readings. 
-    #     EMA gives more weight to recent values, so it adapts more quickly to changes compared to a simple moving average.
-    #     """
-    #     curr_rpm = self._get_curr_rpm()
-    #     self.curr_rpm = self.alpha * curr_rpm + (1 - self.alpha) * self.curr_rpm
-
-    # def _get_curr_rpm(self):
-    #     """Returns the RPM of the encoder"""
-    #     old_index = (self.angle_arr_index + 1 ) % self.angle_samples
-    #     angle_diff = self.angle_arr[self.angle_arr_index] - self.angle_arr[old_index]
-    #     minute_angle = angle_diff / self.sample_time_range * 60 # Angles per minute
-    #     curr_rpm = minute_angle // 360
-    #     return curr_rpm
-
-
+        self.rpm_queue.append(curr_rpm)
+        if(len(self.rpm_queue) > self.rpm_queue_size):
+            self.rpm_queue.pop(0)
+        self.curr_rpm = np.mean(self.rpm_queue)
 
     @property
-    def rpm(self)->float:
+    def rpm(self)->int:
         """Returns the RPM of the encoder"""
-        return self.curr_rpm
-    
-    # @property
-    # def angle(self)->float:
-    #     """Returns the angle of the encoder"""
-    #     return self.angle_curr
+        return int(self.curr_rpm)
+
     
     def __str__(self) -> str:
-        # return f"Angle: {self.angle:.2f} RPM: {self.rpm:.2f}"
-        return f"RPM: {self.rpm:.2f}"
+        return f"RPM: {self.rpm}"
 
     def __enter__(self):
         return self

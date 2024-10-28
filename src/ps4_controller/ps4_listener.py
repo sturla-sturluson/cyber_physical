@@ -80,6 +80,10 @@ class PS4Listener:
         )
         self.mag_sensor = MagneticSensor()
         self.range_sensor = RangeSensor()
+        # self._event_loop()
+
+    def start(self):
+        """Starts the event loop"""
         self._event_loop()
     
     def _event_loop(self):
@@ -96,7 +100,6 @@ class PS4Listener:
             self._auto_drive_handler()
             self._manual_control_handler()
             self._set_speed()
-            self._print_status()
 
     def _change_max_speed(self,event:pygame.event.Event):
         """Changes the max speed of the car"""
@@ -150,14 +153,11 @@ class PS4Listener:
             return "Medium"
         return "Hard"
 
+    def _set_speed(self):
+        """Sets the speed of the car"""
+        self.car_runner.set_speed(self.forward_motion,self.turning_motion)
 
-    def _print_status(self):
-        """Prints the status of the motors"""
-        if (dt.datetime.now() - self.last_print).seconds < 0.5:   # only print once a second
-            return
-        self.last_print = dt.datetime.now()
-        os.system('clear')
-        # Auto drive on or off
+    def __str__(self):
         status_str = f"Auto Drive: {self.is_auto_drive}\n"
         status_str += f"Turning Level: {self._get_turn_level_to_string()}\n"
         status_str += f"Max Speed: {self.target_speed}\n"
@@ -172,11 +172,7 @@ class PS4Listener:
         # status_str += f"Right Speed: {right_speed}\n"
         status_str += f"Controller Values: {self.forward_motion},{self.turning_motion}\n"         # Add the controller values
         status_str += str(self.car_runner)
-        print(status_str)
-
-    def _set_speed(self):
-        """Sets the speed of the car"""
-        self.car_runner.set_speed(self.forward_motion,self.turning_motion)
+        return status_str
 
 
 

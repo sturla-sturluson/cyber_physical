@@ -1,7 +1,7 @@
 import RPi.GPIO as GPIO
 from ..constants import MAX_SPEED, MIN_SPEED, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
 from ..utils import get_duty_cycle_values_from_speed,clamp_speed
-from .phase_reader import PhaseReader
+from .phase_reader_2 import PhaseReader
 import time
 import threading
 
@@ -9,26 +9,30 @@ class Motor:
     NAME:str = "Motor"
     FORWARD:int = 0
     BACKWARD:int = 0
-    MAX_SPEED:int
-    SAMPLES_PER_SECOND:int = 5
+    MAX_POWERLEVEL:int
+    SAMPLES_PER_SECOND:int = 10
     tsample:float = 1/SAMPLES_PER_SECOND
 
     target_rpm:int = 0
+
+    _curr_duty_cycle:int = 0
     # PID Parameters
     # Proportional, used to correct the error
-    Kp:float = 1.0 
+    Kp:float = 0.05
     # Integral, used to correct the error over time
-    Ki:float = 0.5 
+    Ki:float = 0.01
     # Derivative, used to predict the error
-    Kd:float = 0.05  
+    Kd:float = 0.1
 
     previous_error:float = 0
+
+
 
     def __init__(self,
                  gpio_in_1:int,gpio_in_2:int,
                  c_gpio_1:int,c_gpio_2:int,
                  name:str="Motor",
-                 max_speed:int = MAX_SPEED):
+                 max_powerlevel:int = MAX_POWERLEVEL):
         self.gpio_in_1 = gpio_in_1
         self.gpio_in_2 = gpio_in_2
         GPIO.setmode(GPIO.BCM)
@@ -45,7 +49,7 @@ class Motor:
         self.pwm_AIN1.start(0)
         self.pwm_AIN2.start(0)
 
-        self.MAX_SPEED = max_speed
+        self.MAX_POWERLEVEL = max_powerlevel
 
         self._set_duty_cycle()
 
@@ -53,32 +57,65 @@ class Motor:
         self.listen_event = threading.Event()
         self.listen_thread = threading.Thread(target=self._listener)
 
+        # start
+        self.start()
+
     def start(self):
         """Starts the motor"""
         self.listen_event.set()
         self.listen_thread.start()
 
+
     def _listener(self):
-        """Listens for the encoder"""
         while self.listen_event.is_set():
             time.sleep(self.tsample)
-            curr_speed = self.pidreader.rpm
-            error = self.target_rpm - curr_speed
-            # PID
+
+            # Stop the motor if target RPM is zero
+            if self.target_rpm == 0:
+                self.motor_stop()
+                continue
+
+            current_rpm = self.pidreader.rpm_adjusted
+            target_is_forward = self.target_rpm > 0
+
+            # # Invert current RPM if the direction doesn't match the target
+            # if target_is_forward:
+            #     current_rpm = -current_rpm
+
+            # Calculate the error
+            error = self.target_rpm - current_rpm
+
+            # PID calculations
             proportional = self.Kp * error
             integral = self.Ki * error
             derivative = self.Kd * (error - self.previous_error)
-
-            control_signal = proportional + integral + derivative
-
-            self.set_speed(int(control_signal))
-
+            
+            # Update the previous error for the derivative term
             self.previous_error = error
+
+            if(target_is_forward):
+                self.BACKWARD = 0
+                current_power = self.FORWARD
+                current_power += proportional + integral + derivative
+                self.FORWARD = current_power
+            else:
+                self.FORWARD = 0
+                current_power = self.BACKWARD
+                current_power += -(proportional + integral + derivative)
+                self.BACKWARD = current_power
+
+
+
+            self._set_duty_cycle()
+
+                
+
+
 
     def set_max_speed(self,max_speed:int)->None:
         """Updates the speed ceiling"""
         # Hard low is 10, hard max is 100
-        self.MAX_SPEED = clamp_speed(max_speed,10,100)
+        self.MAX_POWERLEVEL = clamp_speed(max_speed,10,100)
 
     def motor_stop(self):
         """Stops the motor"""
@@ -86,12 +123,10 @@ class Motor:
         self.FORWARD = 0
         self._set_duty_cycle()
 
-    def set_speed(self,value:int):
+    def set_target_speed(self,value:int):
         """Sets the speed from -100 to 100"""
-        ain_1,ain_2 = get_duty_cycle_values_from_speed(value)
-        self.FORWARD = ain_1
-        self.BACKWARD = ain_2
-        self._set_duty_cycle() 
+        # Max rpm is 130
+        self.target_rpm = clamp_speed(value,-200,200)
 
     def __enter__(self):
         return self
@@ -110,8 +145,17 @@ class Motor:
 
     def _set_duty_cycle(self):
         """Sets the duty cycle for the motor"""
-        self.pwm_AIN1.ChangeDutyCycle(clamp_speed(self.FORWARD,0,self.MAX_SPEED))
-        self.pwm_AIN2.ChangeDutyCycle(clamp_speed(self.BACKWARD,0,self.MAX_SPEED))
+        forward = clamp_speed(self.FORWARD,0,self.MAX_POWERLEVEL)
+        backward = clamp_speed(self.BACKWARD,0,self.MAX_POWERLEVEL)
+        # print(f"FORWARD: {forward} BACKWARD: {backward}")
+        self.pwm_AIN1.ChangeDutyCycle(forward)
+        self.pwm_AIN2.ChangeDutyCycle(backward)
+
+
+    @property
+    def rpm(self):
+        """Returns the current RPM"""
+        return int(self.pidreader.rpm)
 
     @property
     def current_power(self):
@@ -121,6 +165,21 @@ class Motor:
         elif(self.BACKWARD > 0):
             return -self.BACKWARD
         return 0
+    
 
+# proportional = self.Kp * error
+# integral = self.Ki * error
+# derivative = self.Kd * (error - self.previous_error)
     def __str__(self) -> str:
-        return f"{self.NAME}: {self.current_power} Angle: {int(self.pidreader.angle)} RPM: {int(self.pidreader.rpm)}"
+        error = self.target_rpm - int(self.pidreader.rpm)
+        return f"""{self.NAME}: 
+POWER: {self.current_power} 
+FORWARD: {self.FORWARD}
+BACKWARD: {self.BACKWARD}
+TARGET RPM: {self.target_rpm}
+RPM: {int(self.pidreader.rpm_adjusted)}
+FORWARDS?: {self.pidreader.is_going_forward()}
+ERROR: {error}
+P: {self.Kp * error}
+I: {self.Ki * error}
+D: {self.Kd * (error - self.previous_error)}"""

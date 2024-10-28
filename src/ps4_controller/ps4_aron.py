@@ -185,8 +185,8 @@ class PS4_Aron:
     def _set_speed(self):
         """Sets the speed of the car"""
         # self.car_runner.set_speed(self.forward_motion,self.turning_motion)
-        self.car_runner.motors.left_motor.set_speed(self.Left_speed)
-        self.car_runner.motors.right_motor.set_speed(self.right_speed)
+        self.car_runner.motors.left_motor.set_target_speed(self.Left_speed)
+        self.car_runner.motors.right_motor.set_target_speed(self.right_speed)
 
 
 
