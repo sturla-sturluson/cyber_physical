@@ -43,6 +43,9 @@ class CarRunner():
         while not self._stop_event.is_set():
             time.sleep(self.tsample)
             self._range_stopper()
+    def  set_pid_params(self,Kp:float,Ki:float,Kd:float):
+        """Sets the PID parameters"""
+        self.motors.set_pid_params(Kp,Ki,Kd)    
 
     def set_max_powerlevel(self,max_speed:int)->None:
         """Updates the speed ceiling"""
@@ -57,6 +60,10 @@ class CarRunner():
         """Stops the motors"""
         self.FORWARD_MOTION,self.TURNING_MOTION = 0,0
         self._update_speeds()
+
+    def set_max_rpm(self,max_rpm:int):
+        """Sets the max RPM of the motors"""
+        self.motors.set_max_rpm(max_rpm)
 
     def set_speed(self,forward_motion:int,turning_motion:int) -> int:
         """Sets the speeds of the car, returns the max RPM currently"""

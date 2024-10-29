@@ -114,6 +114,12 @@ class PS4Listener:
             self.forward_motion = 0
             self.turning_motion = 0
             self.is_stopped = True        
+            self.target_speed = 0
+            self.car_runner.set_max_rpm(300)
+
+    def set_pid_params(self,Kp:float,Ki:float,Kd:float):
+        """Sets the PID parameters"""
+        self.car_runner.set_pid_params(Kp,Ki,Kd)
 
     def _listen_toggle_drive(self,event:pygame.event.Event):
         """Toggles the drive on and off"""

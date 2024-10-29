@@ -4,7 +4,7 @@ import threading
 
 class EncoderReader:
     PPR = 700  # Pulses Per Revolution of the encoder
-    UPDATES_PER_SECOND = 10
+    UPDATES_PER_SECOND = 100
     UPDATE_INTERVAL = 1 / UPDATES_PER_SECOND
     alpha = 0.2  # Smoothing factor for EMA
     OLD_STEP = 0
@@ -19,7 +19,7 @@ class EncoderReader:
         # Start the background RPM update thread
         self._stop_event = threading.Event()
         self._update_thread = threading.Thread(target=self._update_rpm)
-        self._update_thread.daemon = True # Allow the program to exit even if thread is running
+        # self._update_thread.daemon = True # Allow the program to exit even if thread is running
         self._update_thread.start()
 
         # Attach a listener for encoder pulses

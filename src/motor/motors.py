@@ -53,6 +53,10 @@ class Motors:
         """Sets the turning level of the car"""
         self.turning_level = turning_level
 
+    def set_max_rpm(self,max_rpm:int):
+        """Sets the max RPM of the motors"""
+        self.MAX_RPM = max_rpm
+
     @property
     def _turning_function(self) ->  Callable[[int,int],tuple[int,int]]:
         """Returns the turning function based on the turning level"""
@@ -84,6 +88,11 @@ class Motors:
         """Updates the speed ceiling"""
         self.left_motor.set_max_powerlevel(max_speed)
         self.right_motor.set_max_powerlevel(max_speed)
+
+    def  set_pid_params(self,Kp:float,Ki:float,Kd:float):
+        """Sets the PID parameters"""
+        self.left_motor.set_pid_params(Kp,Ki,Kd)
+        self.right_motor.set_pid_params(Kp,Ki,Kd)
 
     def set_speed(self,forward_motion:int,turning_motion:int = 0):
         """Sets the speed of the car

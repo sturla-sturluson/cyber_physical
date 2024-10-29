@@ -5,17 +5,19 @@ from .encoder_reader import EncoderReader
 import time
 import threading
 
+
+
 class Motor:
     NAME:str = "Motor"
     FORWARD:int = 0
     BACKWARD:int = 0
     MAX_POWERLEVEL:int
-    UPDATES_PER_SECOND = 10
+    UPDATES_PER_SECOND = 50
     UPDATE_INTERVAL = 1 / UPDATES_PER_SECOND
 
     target_rpm:int = 0
     # PID Parameters
-    Kp:float = 0.05 # Proportional, used to correct the error
+    Kp:float = 0.1 # Proportional, used to correct the error
     Ki:float = 0.01 # Integral, used to correct the error over time
     Kd:float = 0.1  # Derivative, used to predict the error
     previous_error:float = 0
@@ -27,6 +29,7 @@ class Motor:
         GPIO.setmode(GPIO.BCM)
 
         self.NAME = name
+        self.MAX_POWERLEVEL = max_powerlevel
         # Set up GPIO pins
         GPIO.setup(self.gpio_in_1, GPIO.OUT)
         GPIO.setup(self.gpio_in_2, GPIO.OUT)
@@ -36,14 +39,19 @@ class Motor:
         # Start PWM with 0% duty cycle (motor stopped)
         self.pwm_AIN1.start(0)
         self.pwm_AIN2.start(0)
-        self._set_duty_cycle()
 
-        self.MAX_POWERLEVEL = max_powerlevel
+        self._set_duty_cycle()
         self.pidreader = EncoderReader(c_gpio_1,c_gpio_2)
         self._stop_event = threading.Event()
         self._update_thread = threading.Thread(target=self._listener)
-        self._update_thread.daemon = True # Allow the program to exit even if thread is running
+        # self._update_thread.daemon = True # Allow the program to exit even if thread is running
         self._update_thread.start()
+
+    def  set_pid_params(self,Kp:float,Ki:float,Kd:float):
+        """Sets the PID parameters"""
+        self.Kp = Kp
+        self.Ki = Ki
+        self.Kd = Kd
 
     def _listener(self):
         while not self._stop_event.is_set():
