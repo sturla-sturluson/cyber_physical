@@ -26,6 +26,7 @@ class PS4Listener:
     target_speed:int
     target_heading = 0
     is_auto_drive = False
+    is_drive = False
     is_stopped = False
 
     # Turn on auto drive button
@@ -38,6 +39,8 @@ class PS4Listener:
     # Left and right motion
     turn_button:PS4Button = PS4Button(ButtonType.AXIS,id=0,name="Left Stick X",released=0,min=-1,max=1)
 
+    toggle_drive_button:PS4Button = PS4Button(ButtonType.BUTTON,id=0,name="Cross",released=0)
+
     turning_level_button:PS4Button = PS4Button(ButtonType.BUTTON,id=1,name="Circle",released=0)
     # Current motions
     forward_motion,turning_motion = 0,0
@@ -48,7 +51,7 @@ class PS4Listener:
 
     def __init__(self,car_runner:CarRunner):
         self.car_runner = car_runner
-        self.target_speed = self.car_runner.MAX_SPEED
+        self.target_speed = 0
 
         # Init pygame
         pygame.init()
@@ -68,7 +71,6 @@ class PS4Listener:
         self.ps4_input = PS4ControllerInput(self.joystick,dead_zone=self.ps_4_axis_dead_zone)
         self.mag_sensor = MagneticSensor()
         self.range_sensor = RangeSensor()
-        # self._event_loop()
 
     def start(self):
         """Starts the event loop"""
@@ -85,16 +87,26 @@ class PS4Listener:
                 self._listen_stop(event)
                 if(self.is_stopped):
                     break
-
                 self._listen_toggle_auto_drive(event)    
                 # If we press circle, we change the turning level
-                self._listen_turning_level(event)
+                self._listen_change_turning_level(event)
+
+                self._listen_toggle_drive(event)
+
+                self._listen_speed_change(event)
 
             if not self.is_stopped:
                 self._auto_drive_handler()
                 self._turning_values_fetcher()
             self._set_speed()
-    
+
+    def _listen_speed_change(self,event:pygame.event.Event):
+        """Listens for speed changes"""
+        if(event.type == pygame.JOYBUTTONDOWN and event.button == self.accelerate_button.id):
+            self.target_speed += 10
+        elif(event.type == pygame.JOYBUTTONDOWN and event.button == self.decelerate_button.id):
+            self.target_speed -= 10
+
     def _listen_stop(self,event:pygame.event.Event):
         """Stops the car"""
         if(event.type == pygame.JOYBUTTONDOWN and event.button == self.brake_button.id):
@@ -102,6 +114,11 @@ class PS4Listener:
             self.forward_motion = 0
             self.turning_motion = 0
             self.is_stopped = True        
+
+    def _listen_toggle_drive(self,event:pygame.event.Event):
+        """Toggles the drive on and off"""
+        if(event.type == pygame.JOYBUTTONDOWN and event.button == self.toggle_drive_button.id):
+            self.is_drive = not self.is_drive
       
     def _turning_values_fetcher(self):
         """Handles manual control of the car"""
@@ -110,7 +127,7 @@ class PS4Listener:
         self.ps4_input.set_value(self.turn_button)
         self.turning_motion = self.turn_button.get_normalized_value(-100,100)
 
-    def _listen_turning_level(self,event:pygame.event.Event):
+    def _listen_change_turning_level(self,event:pygame.event.Event):
         if(event.type == pygame.JOYBUTTONDOWN and event.button == self.turning_level_button.id):
             self.turning_level_index = (self.turning_level_index + 1) % len(self.TURNING_LEVELS)
             self.car_runner.set_turning_level(self.TURNING_LEVELS[self.turning_level_index])
@@ -137,15 +154,12 @@ class PS4Listener:
 
     def _get_turn_level_to_string(self):
         """Returns the turning level as a string"""
-        if(self.turning_level_index == 0):
-            return "Soft"
-        elif(self.turning_level_index == 1):
-            return "Medium"
-        return "Hard"
+        return str(self.TURNING_LEVELS[self.turning_level_index])
 
     def _set_speed(self):
         """Sets the speed of the car"""
-        self.car_runner.set_speed(self.forward_motion,self.turning_motion)
+        max_rpm = self.car_runner.set_speed(self.forward_motion,self.turning_motion)
+        self.target_speed = clamp_speed(self.target_speed,-max_rpm,max_rpm)
 
     def __str__(self):
         status_str = f"Auto Drive: {self.is_auto_drive}\n"
@@ -157,9 +171,6 @@ class PS4Listener:
         status_str += f"Current Heading: {angle}\n"
         status_str += f"Direction: {nesw_string}\n"
         status_str += f"Range Sensor: {self.range_sensor.get_cm_distance()}\n"         # The range sensor
-        # left_speed,right_speed = self.car_runner.motor_speeds         # Current speed 
-        # status_str += f"Left Speed: {left_speed}\n"
-        # status_str += f"Right Speed: {right_speed}\n"
         status_str += f"Controller Values: {self.forward_motion},{self.turning_motion}\n"         # Add the controller values
         status_str += str(self.car_runner)
         return status_str

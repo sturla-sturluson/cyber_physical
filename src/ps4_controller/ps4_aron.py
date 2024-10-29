@@ -175,7 +175,7 @@ class PS4_Aron:
         # The range sensor
         status_str += f"Range Sensor: {self.range_sensor.get_cm_distance()}\n"
         # Current speed 
-        left_speed,right_speed = self.car_runner.motor_speeds
+        left_speed,right_speed = self.car_runner.motor_powerlevels
         status_str += f"Left Speed: {left_speed}\n"
         status_str += f"Right Speed: {right_speed}\n"
         # Add the controller values

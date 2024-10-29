@@ -1,5 +1,5 @@
 import RPi.GPIO as GPIO
-from ..constants import MAX_SPEED, MIN_SPEED, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
+from ..constants import MAX_POWERLEVEL as C_MAX_POWERLEVEL
 from ..utils import get_duty_cycle_values_from_speed,clamp_speed
 from .encoder_reader import EncoderReader
 import time
@@ -21,7 +21,7 @@ class Motor:
     previous_error:float = 0
 
 
-    def __init__(self,gpio_in_1:int,gpio_in_2:int,c_gpio_1:int,c_gpio_2:int,name:str="Motor",max_powerlevel:int = MAX_POWERLEVEL):
+    def __init__(self,gpio_in_1:int,gpio_in_2:int,c_gpio_1:int,c_gpio_2:int,name:str="Motor",max_powerlevel:int = C_MAX_POWERLEVEL):
         self.gpio_in_1 = gpio_in_1
         self.gpio_in_2 = gpio_in_2
         GPIO.setmode(GPIO.BCM)
@@ -67,15 +67,15 @@ class Motor:
                 self.BACKWARD = 0
                 current_power = self.FORWARD
                 current_power += proportional + integral + derivative
-                self.FORWARD = current_power
+                self.FORWARD = int(current_power)
             else:
                 self.FORWARD = 0
                 current_power = self.BACKWARD
                 current_power += -(proportional + integral + derivative)
-                self.BACKWARD = current_power
+                self.BACKWARD = int(current_power)
             self._set_duty_cycle()
 
-    def set_max_power(self,max_speed:int)->None:
+    def set_max_powerlevel(self,max_speed:int)->None:
         """Updates the speed ceiling"""
         self.MAX_POWERLEVEL = clamp_speed(max_speed,10,100)
 

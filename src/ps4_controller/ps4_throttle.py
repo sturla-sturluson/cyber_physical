@@ -100,10 +100,10 @@ class PS4Listener:
         curr_speed = self.target_speed
         if(event.type == pygame.JOYBUTTONDOWN and event.button == self.increase_max_speed_button.id):
             self.target_speed = min(curr_speed + 10,100)
-            self.car_runner.set_max_speed(self.target_speed)
+            self.car_runner.set_max_powerlevel(self.target_speed)
         elif(event.type == pygame.JOYBUTTONDOWN and event.button == self.decrease_max_speed_button.id):
             self.target_speed = max(curr_speed - 10,10)
-            self.car_runner.set_max_speed(self.target_speed)
+            self.car_runner.set_max_powerlevel(self.target_speed)
         
       
     def _manual_control_handler(self):

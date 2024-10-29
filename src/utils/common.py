@@ -1,14 +1,14 @@
 # Common functions for all motors functions
 try:
-    from ..constants import MAX_SPEED, MIN_SPEED, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
+    from ..constants import MAX_POWERLEVEL, MIN_POWERLEVEL, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
 except ImportError:
-    MAX_SPEED = 100
-    MIN_SPEED = -100
+    MAX_POWERLEVEL = 100
+    MIN_POWERLEVEL = -100
     MAX_DUTY_CYCLE = 100
     MIN_DUTY_CYCLE = 0
 
 
-def clamp_speed(speed:int|float,lower:int=MIN_SPEED,upper:int=MAX_SPEED)->int:
+def clamp_speed(speed:int|float,lower:int=MIN_POWERLEVEL,upper:int=MAX_POWERLEVEL)->int:
     """Clamps the speed value between the MAX_SPEED and MIN_SPEED"""
     speed = int(speed)
     return max(min(speed,upper),lower)
