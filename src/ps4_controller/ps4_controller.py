@@ -1,5 +1,6 @@
 from .ps4_button import PS4Button
 import pygame
+from ..enums import ButtonType
 
 class PS4ControllerInput:
     ACCELERATE_BTN:PS4Button
@@ -12,26 +13,14 @@ class PS4ControllerInput:
     BUTTON_IDS:list[int]
 
     PS_TYPES_BUTTONS = [pygame.JOYBUTTONDOWN,pygame.JOYBUTTONUP]
+    PS_TYPES_HATS = [pygame.JOYHATMOTION]
 
-    PS_TYPES = [pygame.JOYAXISMOTION,*PS_TYPES_BUTTONS]
+    PS_TYPES = [pygame.JOYAXISMOTION,*PS_TYPES_BUTTONS,*PS_TYPES_HATS]
 
 
-    def __init__(self,
-                 accelerate_btn:PS4Button,
-                    reverse_btn:PS4Button,
-                    steer_btn:PS4Button,
-                    brake_btn:PS4Button,
-                    dead_zone:float = 0.10):
-
-        self.ACCELERATE_BTN = accelerate_btn
-        self.REVERSE_BTN = reverse_btn
-        self.STEER_BTN = steer_btn
-        self.BRAKE_BTN = brake_btn
+    def __init__(self,joy_stick:pygame.joystick.JoystickType,dead_zone:float = 0.1):
+        self.joy_stick = joy_stick
         self.DEAD_ZONE = dead_zone
-
-        self.ALL_BTNS = [self.ACCELERATE_BTN,self.REVERSE_BTN,self.STEER_BTN,self.BRAKE_BTN]
-        self.AXIS_IDS = [button.id for button in self.ALL_BTNS if button.type == "Axis"]
-        self.BUTTON_IDS = [button.id for button in self.ALL_BTNS if button.type == "Button"]
 
     def get_values_from_game(self,joy_stick:pygame.joystick.JoystickType)->tuple[int,int]:
         """Returns the values for the car based on the game state"""
@@ -58,3 +47,14 @@ class PS4ControllerInput:
         # If we are steering, we return the steering value
         turning_motion = self.STEER_BTN.get_normalized_value(-100,100)
         return forward_motion,turning_motion
+    
+    def set_value(self,button:PS4Button)->None:
+        """Returns the value of the button"""
+        value = 0
+        if(button.type == ButtonType.BUTTON):
+            value = self.joy_stick.get_button(button.id)
+        elif(button.type == ButtonType.AXIS):
+            value = self.joy_stick.get_axis(button.id)
+        # elif button.type == ButtonType.HAT:
+        #     value = self.joy_stick.get_hat(button.id)
+        button.set_value(value,self.DEAD_ZONE)

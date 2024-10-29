@@ -24,13 +24,13 @@ def main():
     with Motor(AIN1_PIN,AIN2_PIN,A_C1_PIN,A_C2_PIN) as motor:
         last_speed_update = time.time()
         # motor.start()
-        motor.set_target_speed(speeds.pop(0))
+        motor.set_target_rpm(speeds.pop(0))
         while True:
             # os.system("clear")
             print(motor)
             time.sleep(0.5)
             if(time.time() - last_speed_update > 100):
-                motor.set_target_speed(speeds.pop(0))
+                motor.set_target_rpm(speeds.pop(0))
                 last_speed_update = time.time()
 
 

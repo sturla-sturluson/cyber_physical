@@ -72,4 +72,3 @@ def button_id_tester():
             if(event.type == pygame.JOYAXISMOTION and abs(event.value) > 0.1):
                 print(f"Axis Moved : {event.axis} : {ps4_axis.get(event.axis,'Not found')} : {event.value:.2f}")
 
-

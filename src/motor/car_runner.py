@@ -4,7 +4,7 @@ import os
 import asyncio
 import datetime as dt
 import math
-from .. constants import MAX_SPEED, MIN_SPEED, MAX_DUTY_CYCLE, MIN_DUTY_CYCLE
+from .. constants import MAX_SPEED as C_MAX_SPEED
 from ..utils.common import clamp_speed
 from ..sensors import RangeSensor
 from ..display import OledDisplay
@@ -22,7 +22,7 @@ class CarRunner():
     display:OledDisplay|None = None
     last_display_time = dt.datetime.now()
 
-    def __init__(self,stop_range:int|None = None,screen_on:bool = False,max_speed:int = MAX_SPEED):
+    def __init__(self,stop_range:int|None = None,screen_on:bool = False,max_speed:int = C_MAX_SPEED):
         self.motors = Motors(max_speed)
         self.MAX_SPEED = max_speed
         self.FORWARD_MOTION = 0

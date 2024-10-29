@@ -1,7 +1,7 @@
 from ..utils import get_clamped_dead_zone,get_scaled_number
-
+from ..enums import ButtonType
 class PS4Button:
-    type:str   # Button or Axis
+    type:ButtonType
     id:int     # Button or Axis id
     value:int|float  # Value of the button or axis
     # Button or Axis name
@@ -10,7 +10,7 @@ class PS4Button:
     released:int
     min:int
     max:int
-    def __init__(self,type:str,id:int,name:str,released:int=0,min:int=0,max:int=1):
+    def __init__(self,type:ButtonType,id:int,name:str,released:int=0,min:int=0,max:int=1):
         self.type = type
         self.id = id
         self.value = released
@@ -19,7 +19,7 @@ class PS4Button:
         self.min = min
         self.max = max
     def __str__(self):
-        if(self.type == "Button"):
+        if(self.type == ButtonType.BUTTON):
             return f"{self.name} : {self.value>0 if 'Pressed' else 'Released'}"
         return f"{self.name} : {self.value}"
     
