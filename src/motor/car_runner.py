@@ -4,7 +4,6 @@ import os
 import asyncio
 import datetime as dt
 import math
-from .. constants import MAX_POWERLEVEL as C_MAX_SPEED
 from ..utils.common import clamp_speed
 from ..sensors import RangeSensor
 from ..enums import TurningLevel
@@ -16,7 +15,6 @@ class CarRunner():
     # This is the range that any forward motion will be set to 0
     STOP_RANGE:int = 40 # in cm
     STOP_FORWARD:bool = False
-    MAX_SPEED:int
 
     SAMPLES_PER_SECOND:int = 10
     tsample:float = 1/SAMPLES_PER_SECOND
@@ -26,9 +24,8 @@ class CarRunner():
     stop_timer = dt.timedelta(milliseconds=500)
 
 
-    def __init__(self,stop_range:int|None = None,max_speed:int = C_MAX_SPEED):
-        self.motors = Motors(max_speed)
-        self.MAX_SPEED = max_speed
+    def __init__(self,stop_range:int|None = None):
+        self.motors = Motors()
         self.FORWARD_MOTION = 0
         self.TURNING_MOTION = 0
         if stop_range is not None:
@@ -47,11 +44,6 @@ class CarRunner():
         """Sets the PID parameters"""
         self.motors.set_pid_params(Kp,Ki,Kd)    
 
-    def set_max_powerlevel(self,max_speed:int)->None:
-        """Updates the speed ceiling"""
-        self.MAX_SPEED = max(max_speed,10) # Min speed is still 10
-        self.motors.set_max_powerlevel(max_speed)
-
     def set_turning_level(self,turning_level:TurningLevel):
         """Sets the turning level of the car"""
         self.motors.set_turning_level(turning_level)
@@ -60,10 +52,6 @@ class CarRunner():
         """Stops the motors"""
         self.FORWARD_MOTION,self.TURNING_MOTION = 0,0
         self._update_speeds()
-
-    def set_max_rpm(self,max_rpm:int):
-        """Sets the max RPM of the motors"""
-        self.motors.set_max_rpm(max_rpm)
 
     def set_speed(self,forward_motion:int,turning_motion:int) -> int:
         """Sets the speeds of the car, returns the max RPM currently"""

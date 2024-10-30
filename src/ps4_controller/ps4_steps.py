@@ -9,6 +9,7 @@ import datetime as dt
 import time
 from ..interfaces import IRangeSensor
 from ..enums import TurningLevel,ButtonType
+from ..constants import MAX_RPM
 
 def is_off_course(current_heading:int,target_heading:int, dead_zone:int = 5):
     """Returns True if the car is off course"""
@@ -115,7 +116,6 @@ class PS4Listener:
             self.turning_motion = 0
             self.is_stopped = True        
             self.target_speed = 0
-            self.car_runner.set_max_rpm(300)
 
     def set_pid_params(self,Kp:float,Ki:float,Kd:float):
         """Sets the PID parameters"""
@@ -164,8 +164,8 @@ class PS4Listener:
 
     def _set_speed(self):
         """Sets the speed of the car"""
-        max_rpm = self.car_runner.set_speed(self.forward_motion,self.turning_motion)
-        self.target_speed = clamp_speed(self.target_speed,-max_rpm,max_rpm)
+        self.car_runner.set_speed(self.forward_motion,self.turning_motion)
+        self.target_speed = clamp_speed(self.target_speed,-MAX_RPM,MAX_RPM)
 
     def __str__(self):
         status_str = f"Auto Drive: {self.is_auto_drive}\n"

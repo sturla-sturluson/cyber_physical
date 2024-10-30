@@ -1,6 +1,6 @@
 from . import Motor
 from ..utils import clamp_speed
-from ..constants import SLEEP_PIN,AIN1_PIN,AIN2_PIN,BIN1_PIN,BIN2_PIN,MAX_POWERLEVEL,A_C1_PIN,A_C2_PIN,B_C1_PIN,B_C2_PIN
+from ..constants import SLEEP_PIN,AIN1_PIN,AIN2_PIN,BIN1_PIN,BIN2_PIN,MAX_POWERLEVEL,A_C1_PIN,A_C2_PIN,B_C1_PIN,B_C2_PIN,MAX_RPM
 import RPi.GPIO as GPIO
 from ..enums import TurningLevel
 import threading
@@ -11,16 +11,15 @@ class Motors:
     ERROR_RATE = 0.005 # Change in speed to update the motors
     LAST_FORWARD_MOTION:int = 0
     LAST_TURNING_MOTION:int = 0
-    MAX_RPM = 300
     SAMPLES_PER_SECOND:int = 2
     tsample:float = 1/SAMPLES_PER_SECOND
 
-    def __init__(self,max_powerlevel:int = MAX_POWERLEVEL):
+    def __init__(self):
         self._turn_motor_controller_on()
         left_pins = (BIN1_PIN,BIN2_PIN,B_C2_PIN,B_C1_PIN) # This is reversed on purpose
         right_pins = (AIN1_PIN,AIN2_PIN,A_C1_PIN,A_C2_PIN)
-        self.left_motor = Motor(*left_pins,name="Left Motor",max_powerlevel=max_powerlevel)
-        self.right_motor = Motor(*right_pins,name="Right Motor",max_powerlevel=max_powerlevel)
+        self.left_motor = Motor(*left_pins,name="Left Motor")
+        self.right_motor = Motor(*right_pins,name="Right Motor")
         self.turning_level = TurningLevel.MEDIUM
         # Thread that monitors that the motors are not hitting the max RPM
 
@@ -31,23 +30,23 @@ class Motors:
 
     def _clamp_speed_internal(self,speed:int):
         """Clamps the speed of the motor but using the max RPM"""
-        return clamp_speed(speed,-self.MAX_RPM,self.MAX_RPM)
+        return clamp_speed(speed,-MAX_RPM,MAX_RPM)
 
     def _listener(self):
         while not self._stop_event.is_set():
             time.sleep(self.tsample)
             # Check the current power output 
-            l_power = abs(self.left_motor.current_power)
-            r_power = abs(self.right_motor.current_power)
-            curr_rpm = 0
-            if(l_power > 95):
-                curr_rpm = self.left_motor.rpm - 10
-            elif(r_power > 95):
-                curr_rpm = self.right_motor.rpm - 10
-            if(curr_rpm > 0):
-                self.MAX_RPM = curr_rpm
-                self.left_motor.set_target_rpm(curr_rpm)
-                self.right_motor.set_target_rpm(curr_rpm)
+            # l_power = abs(self.left_motor.current_power)
+            # r_power = abs(self.right_motor.current_power)
+            # curr_rpm = 0
+            # if(l_power > 95):
+            #     curr_rpm = self.left_motor.rpm - 10
+            # elif(r_power > 95):
+            #     curr_rpm = self.right_motor.rpm - 10
+            # if(curr_rpm > 0):
+            #     self.MAX_RPM = curr_rpm
+            #     self.left_motor.set_target_rpm(curr_rpm)
+            #     self.right_motor.set_target_rpm(curr_rpm)
 
     def set_turning_level(self,turning_level:TurningLevel):
         """Sets the turning level of the car"""
@@ -84,11 +83,6 @@ class Motors:
         self.right_motor.cleanup()
         GPIO.cleanup()
 
-    def set_max_powerlevel(self,max_speed:int)->None:
-        """Updates the speed ceiling"""
-        self.left_motor.set_max_powerlevel(max_speed)
-        self.right_motor.set_max_powerlevel(max_speed)
-
     def  set_pid_params(self,Kp:float,Ki:float,Kd:float):
         """Sets the PID parameters"""
         self.left_motor.set_pid_params(Kp,Ki,Kd)
@@ -101,15 +95,10 @@ class Motors:
         """
         if not self._check_update(forward_motion,turning_motion):
             return
-        self.LAST_FORWARD_MOTION = clamp_speed(forward_motion,-self.MAX_RPM,self.MAX_RPM)
+        self.LAST_FORWARD_MOTION = self._clamp_speed_internal(forward_motion)
         self.LAST_TURNING_MOTION = turning_motion
-        left_engine_speed,right_engine_speed = self.LAST_FORWARD_MOTION,self.LAST_FORWARD_MOTION
-        
-        if(abs(turning_motion) > 5):
-            left_engine_speed,right_engine_speed = self._calculate_turning_motion_values(self.LAST_FORWARD_MOTION,turning_motion)
 
-        left_engine_speed = self._clamp_speed_internal(left_engine_speed)
-        right_engine_speed = self._clamp_speed_internal(right_engine_speed)
+        left_engine_speed,right_engine_speed = self._calculate_turning_motion_values(self.LAST_FORWARD_MOTION,turning_motion)
 
         self.left_motor.set_target_rpm(left_engine_speed)
         self.right_motor.set_target_rpm(right_engine_speed)
@@ -127,11 +116,10 @@ class Motors:
         # If we are going forward, and turning motion is positive, we are turning right
         # If we are going backwards , turning motion is positive we are also turning right
         # This way we know if turning right, always lower the right motor speed and vice versa
-        if(abs(turning_motion) < 1): # If turning motion is very low, then we don't turn
+        if(abs(turning_motion) < 5): # If turning motion is very low, then we don't turn
             return forward_motion,forward_motion
         return self._turning_function(forward_motion,turning_motion)
         
-
     def _get_hard_turning_values(self,forward_motion:int,turning_motion:int):
         """Returns very aggressive turning values"""
         turning_motion *= 2

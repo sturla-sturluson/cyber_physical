@@ -1,5 +1,5 @@
 import RPi.GPIO as GPIO
-from ..constants import MAX_POWERLEVEL as C_MAX_POWERLEVEL
+from ..constants import MAX_POWERLEVEL,MAX_RPM
 from ..utils import get_duty_cycle_values_from_speed,clamp_speed
 from .encoder_reader import EncoderReader
 import time
@@ -7,11 +7,25 @@ import threading
 
 
 
+POWER_TO_RPM = {
+    0:0,
+    10:10,
+    20:20,
+    30:30,
+    40:40,
+    50:50,
+    60:60,
+    70:70,
+    80:80,
+    90:90,
+    100:100
+}
+
+
 class Motor:
     NAME:str = "Motor"
-    FORWARD:int = 0
-    BACKWARD:int = 0
-    MAX_POWERLEVEL:int
+    FORWARD_POWER:int = 0
+    BACKWARD_POWER:int = 0
     UPDATES_PER_SECOND = 50
     UPDATE_INTERVAL = 1 / UPDATES_PER_SECOND
 
@@ -23,13 +37,12 @@ class Motor:
     previous_error:float = 0
 
 
-    def __init__(self,gpio_in_1:int,gpio_in_2:int,c_gpio_1:int,c_gpio_2:int,name:str="Motor",max_powerlevel:int = C_MAX_POWERLEVEL):
+    def __init__(self,gpio_in_1:int,gpio_in_2:int,c_gpio_1:int,c_gpio_2:int,name:str="Motor"):
         self.gpio_in_1 = gpio_in_1
         self.gpio_in_2 = gpio_in_2
         GPIO.setmode(GPIO.BCM)
 
         self.NAME = name
-        self.MAX_POWERLEVEL = max_powerlevel
         # Set up GPIO pins
         GPIO.setup(self.gpio_in_1, GPIO.OUT)
         GPIO.setup(self.gpio_in_2, GPIO.OUT)
@@ -63,46 +76,50 @@ class Motor:
             # Lets get the current RPM and if the target speed is reversing or not
             current_rpm = self.pidreader.rpm_adjusted
             target_is_forward = self.target_rpm > 0
+
             # Getting the curr error
-            error = self.target_rpm - current_rpm
+            # OPTIONALLY LETS SET TARGET ALWAYS TO BE A LITTLE BIT LOWER
+            # error =  current_rpm - self.target_rpm
+            error =  current_rpm - (self.target_rpm * 0.95)
             error_delta = error - self.previous_error
             self.previous_error = error
             # PID calculations
             proportional = self.Kp * error
             integral = self.Ki * error
             derivative = self.Kd * error_delta
-            if(target_is_forward):
-                self.BACKWARD = 0
-                current_power = self.FORWARD
-                current_power += proportional + integral + derivative
-                self.FORWARD = int(current_power)
-            else:
-                self.FORWARD = 0
-                current_power = self.BACKWARD
-                current_power += -(proportional + integral + derivative)
-                self.BACKWARD = int(current_power)
-            self._set_duty_cycle()
 
-    def set_max_powerlevel(self,max_speed:int)->None:
-        """Updates the speed ceiling"""
-        self.MAX_POWERLEVEL = clamp_speed(max_speed,10,100)
+            controller_output = proportional + integral + derivative
+
+            # Setting the power output
+            self._set_power(int(controller_output))
+
 
     def motor_stop(self):
         """Stops the motor"""
-        self.FORWARD = 0
-        self.BACKWARD = 0
+        self.FORWARD_POWER = 0
+        self.BACKWARD_POWER = 0
         self._set_duty_cycle()
 
     def set_target_rpm(self,value:int):
-        """Sets the target RPM (-200 to 200)"""
-        self.target_rpm = clamp_speed(value,-200,200)
+        """Sets the target RPM"""
+        self.target_rpm = clamp_speed(value,-MAX_RPM,MAX_RPM)
+
+    def _set_power(self,power_output:int):
+        """Setting power from -100 to 100"""
+        if(power_output > 0):
+            self.FORWARD_POWER = power_output
+            self.BACKWARD_POWER = 0
+        else:
+            self.FORWARD_POWER = 0
+            self.BACKWARD_POWER = -power_output
+        self._set_duty_cycle()
 
     def _set_duty_cycle(self):
         """Sets the duty cycle for the motor"""
-        self.FORWARD = clamp_speed(self.FORWARD,0,self.MAX_POWERLEVEL)
-        self.BACKWARD = clamp_speed(self.BACKWARD,0,self.MAX_POWERLEVEL)
-        self.pwm_AIN1.ChangeDutyCycle(self.FORWARD)
-        self.pwm_AIN2.ChangeDutyCycle(self.BACKWARD)
+        self.FORWARD_POWER = clamp_speed(self.FORWARD_POWER,0,MAX_POWERLEVEL)
+        self.BACKWARD_POWER = clamp_speed(self.BACKWARD_POWER,0,MAX_POWERLEVEL)
+        self.pwm_AIN1.ChangeDutyCycle(self.FORWARD_POWER)
+        self.pwm_AIN2.ChangeDutyCycle(self.BACKWARD_POWER)
 
     @property
     def rpm(self):
@@ -112,18 +129,18 @@ class Motor:
     @property
     def current_power(self):
         """Returns current speed from -100 to 100"""
-        if(self.FORWARD > 0):
-            return self.FORWARD
-        elif(self.BACKWARD > 0):
-            return -self.BACKWARD
+        if(self.FORWARD_POWER > 0):
+            return self.FORWARD_POWER
+        elif(self.BACKWARD_POWER > 0):
+            return -self.BACKWARD_POWER
         return 0
     
     def __str__(self) -> str:
         error = self.target_rpm - int(self.pidreader.rpm)
         return f"""{self.NAME}: 
 POWER: {self.current_power} 
-FORWARD: {self.FORWARD}
-BACKWARD: {self.BACKWARD}
+FORWARD: {self.FORWARD_POWER}
+BACKWARD: {self.BACKWARD_POWER}
 TARGET RPM: {self.target_rpm}
 RPM: {int(self.pidreader.rpm_adjusted)}
 FORWARDS?: {self.pidreader.is_going_forward()}

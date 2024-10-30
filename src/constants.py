@@ -51,6 +51,7 @@ for pin_name,pin in zip(["LED_PIN","RANGE_SENSOR_PIN","AIN1_PIN","AIN2_PIN","BIN
 
 
 # Motors constants
+MAX_RPM = 110
 
 MAX_POWERLEVEL = 100
 MIN_POWERLEVEL = -100
