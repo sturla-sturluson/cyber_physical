@@ -29,6 +29,7 @@ class Motor:
     UPDATES_PER_SECOND = 50
     UPDATE_INTERVAL = 1 / UPDATES_PER_SECOND
 
+    PID_SELF_CORRECT:bool 
     target_rpm:int = 0
     # PID Parameters
     Kp:float = 0.1 # Proportional, used to correct the error
@@ -37,10 +38,15 @@ class Motor:
     previous_error:float = 0
 
 
-    def __init__(self,gpio_in_1:int,gpio_in_2:int,c_gpio_1:int,c_gpio_2:int,name:str="Motor"):
+    def __init__(self,
+                 gpio_in_1:int,gpio_in_2:int,
+                 c_gpio_1:int = 0, c_gpio_2:int = 0,
+                 pid_self_correction:bool = False,
+                 name:str="Motor"):
         self.gpio_in_1 = gpio_in_1
         self.gpio_in_2 = gpio_in_2
         GPIO.setmode(GPIO.BCM)
+        self.PID_SELF_CORRECT = pid_self_correction
 
         self.NAME = name
         # Set up GPIO pins
@@ -55,10 +61,11 @@ class Motor:
 
         self._set_duty_cycle()
         self.pidreader = EncoderReader(c_gpio_1,c_gpio_2)
-        self._stop_event = threading.Event()
-        self._update_thread = threading.Thread(target=self._listener)
-        # self._update_thread.daemon = True # Allow the program to exit even if thread is running
-        self._update_thread.start()
+        if(self.PID_SELF_CORRECT):
+            self._stop_event = threading.Event()
+            self._update_thread = threading.Thread(target=self._listener)
+            # self._update_thread.daemon = True # Allow the program to exit even if thread is running
+            self._update_thread.start()
 
     def  set_pid_params(self,Kp:float,Ki:float,Kd:float):
         """Sets the PID parameters"""
@@ -80,7 +87,7 @@ class Motor:
             # Getting the curr error
             # OPTIONALLY LETS SET TARGET ALWAYS TO BE A LITTLE BIT LOWER
             # error =  current_rpm - self.target_rpm
-            error =  current_rpm - (self.target_rpm * 0.95)
+            error =  (self.target_rpm * 0.95) - current_rpm
             error_delta = error - self.previous_error
             self.previous_error = error
             # PID calculations
@@ -90,6 +97,11 @@ class Motor:
 
             controller_output = proportional + integral + derivative
 
+            current_power = self.current_power
+            if(controller_output>current_power):
+                controller_output = current_power + 1
+            elif(controller_output < current_power):
+                controller_output = current_power - 1
             # Setting the power output
             self._set_power(int(controller_output))
 
@@ -103,6 +115,10 @@ class Motor:
     def set_target_rpm(self,value:int):
         """Sets the target RPM"""
         self.target_rpm = clamp_speed(value,-MAX_RPM,MAX_RPM)
+
+    def set_target_power(self,value:int):
+        """Sets the target power from -100 to 100"""
+        self._set_power(value)
 
     def _set_power(self,power_output:int):
         """Setting power from -100 to 100"""
@@ -164,7 +180,9 @@ D: {self.Kd * (error - self.previous_error)}"""
     def cleanup(self):
         """Cleans up the motor"""
         print(f"Cleaning up {self.NAME}")
+        if(self.PID_SELF_CORRECT):
+            self.stop()
         GPIO.cleanup()
         self.pidreader.cleanup()
         self.motor_stop()
-        self.stop()
+

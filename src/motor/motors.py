@@ -14,39 +14,21 @@ class Motors:
     SAMPLES_PER_SECOND:int = 2
     tsample:float = 1/SAMPLES_PER_SECOND
 
-    def __init__(self):
+    PID_SELF_CORRECT:bool 
+
+    def __init__(self, pid_self_correction:bool) -> None:
         self._turn_motor_controller_on()
         left_pins = (BIN1_PIN,BIN2_PIN,B_C2_PIN,B_C1_PIN) # This is reversed on purpose
         right_pins = (AIN1_PIN,AIN2_PIN,A_C1_PIN,A_C2_PIN)
-        self.left_motor = Motor(*left_pins,name="Left Motor")
-        self.right_motor = Motor(*right_pins,name="Right Motor")
+        self.left_motor = Motor(*left_pins,name="Left Motor",pid_self_correction=pid_self_correction)
+        self.right_motor = Motor(*right_pins,name="Right Motor",pid_self_correction=pid_self_correction)
         self.turning_level = TurningLevel.MEDIUM
         # Thread that monitors that the motors are not hitting the max RPM
-
-        self._stop_event = threading.Event()
-        self._update_thread = threading.Thread(target=self._listener)
-        self._update_thread.start()
-
+        self.PID_SELF_CORRECT = pid_self_correction
 
     def _clamp_speed_internal(self,speed:int):
         """Clamps the speed of the motor but using the max RPM"""
         return clamp_speed(speed,-MAX_RPM,MAX_RPM)
-
-    def _listener(self):
-        while not self._stop_event.is_set():
-            time.sleep(self.tsample)
-            # Check the current power output 
-            # l_power = abs(self.left_motor.current_power)
-            # r_power = abs(self.right_motor.current_power)
-            # curr_rpm = 0
-            # if(l_power > 95):
-            #     curr_rpm = self.left_motor.rpm - 10
-            # elif(r_power > 95):
-            #     curr_rpm = self.right_motor.rpm - 10
-            # if(curr_rpm > 0):
-            #     self.MAX_RPM = curr_rpm
-            #     self.left_motor.set_target_rpm(curr_rpm)
-            #     self.right_motor.set_target_rpm(curr_rpm)
 
     def set_turning_level(self,turning_level:TurningLevel):
         """Sets the turning level of the car"""
@@ -55,6 +37,13 @@ class Motors:
     def set_max_rpm(self,max_rpm:int):
         """Sets the max RPM of the motors"""
         self.MAX_RPM = max_rpm
+
+    @property
+    def _speed_functions(self) -> tuple[Callable[[int],None],Callable[[int],None]]:
+        """Returns the speed function based on the max RPM"""
+        if(self.PID_SELF_CORRECT):
+            return self.left_motor.set_target_rpm,self.right_motor.set_target_rpm
+        return self.left_motor.set_target_power,self.right_motor.set_target_power
 
     @property
     def _turning_function(self) ->  Callable[[int,int],tuple[int,int]]:
@@ -78,7 +67,6 @@ class Motors:
         
     def cleanup(self):
         print("Cleaning up Motors")
-        self._stop_event.set()
         self.left_motor.cleanup()
         self.right_motor.cleanup()
         GPIO.cleanup()
@@ -100,8 +88,9 @@ class Motors:
 
         left_engine_speed,right_engine_speed = self._calculate_turning_motion_values(self.LAST_FORWARD_MOTION,turning_motion)
 
-        self.left_motor.set_target_rpm(left_engine_speed)
-        self.right_motor.set_target_rpm(right_engine_speed)
+        left_motor_func,right_motor_func = self._speed_functions
+        left_motor_func(left_engine_speed)
+        right_motor_func(right_engine_speed)
 
     def _check_update(self,forward_motion:int,turning_motion:int):
         """Checks if we need to update the motors"""
@@ -138,11 +127,17 @@ class Motors:
 
     def _get_soft_turning_values(self,forward_motion:int,turning_motion:int):
         """Returns a soft turning"""
+        max_speed = forward_motion
+        min_speed = 0
         right_motor_speed,left_motor_speed = forward_motion,forward_motion
+        if(forward_motion < 0):
+            max_speed = 0
+            min_speed = forward_motion
+            
         turning_adjusted = self._get_scaled_turning_speed(forward_motion,turning_motion) * 0.75
         right_motor_speed += turning_adjusted # If we are turning right, we need to lower the right motor speed
         left_motor_speed -= turning_adjusted  # Same for left motor
-        return clamp_speed(right_motor_speed),clamp_speed(left_motor_speed)
+        return clamp_speed(right_motor_speed,min_speed,max_speed),clamp_speed(left_motor_speed,min_speed,max_speed)
            
     @classmethod
     def _get_scaled_turning_speed(cls,forward_motion:int,turning_motion:int):

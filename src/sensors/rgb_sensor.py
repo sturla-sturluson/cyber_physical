@@ -1,14 +1,23 @@
 import board
 from adafruit_tcs34725 import TCS34725
-from ..utils import rgb_to_name
+from ..enums import TapeColor
+import threading
+import time
+from queue import Queue
+
+RED_TAPE = (255,0,0) # 100 0 0    
+BLACK_TAPE = (0,0,0) # 45 45 45 
+BLUE_TAPE = (0,0,255) # 12 12 12
+
 
 
 class RgbSensor():
+    """Class to handle the RGB sensor"""
     def __init__(self):
         ioc = board.I2C()
         self.sensor = TCS34725(ioc)
-        #self.sensor.integration_time = 200
-        #self.sensor.gain = 16
+        # Set the integration time to 150ms
+        self.sensor.integration_time = 10      
 
     def get_rgb(self):
         return self.sensor.color_rgb_bytes
@@ -22,7 +31,7 @@ class RgbSensor():
         rgb = self.get_rgb()
         primary_color = self.get_primary_color()
         temperature = self.get_color_from_temp()
-        return f"Name: {primary_color}\nTemp: {temperature}"
+        return f"Name: {primary_color} Temp: {temperature}"
 
     
 
@@ -64,3 +73,4 @@ class RgbSensor():
             return "Cool White"
         else:
             return "Bluish"
+        

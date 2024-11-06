@@ -1,25 +1,20 @@
 import pygame
 import os
 from ..motor import CarRunner
-from ..utils import clamp_speed,get_clamped_dead_zone,get_heading_difference
+from ..utils import clamp_speed,get_clamped_dead_zone,get_heading_difference,get_tape_color
 from .ps4_button import PS4Button
 from .ps4_controller import PS4ControllerInput
-from ..sensors import MagneticSensor,RangeSensor
+from ..sensors import MagneticSensor,RangeSensor,RgbSensor
 import datetime as dt
 import time
 from ..interfaces import IRangeSensor
-from ..enums import ButtonType, TurningLevel
-
-def is_off_course(current_heading:int,target_heading:int, dead_zone:int = 5):
-    """Returns True if the car is off course"""
-    delta = abs(current_heading - target_heading) % 360
-    if delta > 180:
-        delta = 360 - delta
-    return delta > dead_zone
+from ..enums import ButtonType, TurningLevel,TapeColor
 
 
 
-class PS4Listener:
+
+
+class BasePS4Listener:
     ps_4_axis_dead_zone = 0.10
     fps = 10
 
@@ -50,7 +45,7 @@ class PS4Listener:
     range_sensor:IRangeSensor
 
     TURNING_LEVELS = [TurningLevel.SOFT,TurningLevel.MEDIUM,TurningLevel.HARD]
-    turning_level_index = 1
+    turning_level_index = 0
 
     def __init__(self,car_runner:CarRunner):
         self.car_runner = car_runner
@@ -74,7 +69,11 @@ class PS4Listener:
         self.ps4_input = PS4ControllerInput(self.joystick,dead_zone=self.ps_4_axis_dead_zone)
         self.mag_sensor = MagneticSensor()
         self.range_sensor = RangeSensor()
+        self.rgb_sensor = RgbSensor()
         # self._event_loop()
+
+        # set turning level
+        self.car_runner.set_turning_level(self.TURNING_LEVELS[self.turning_level_index])
 
     def start(self):
         """Starts the event loop"""
@@ -121,20 +120,36 @@ class PS4Listener:
         if(self.is_auto_drive 
            and  event.type == pygame.JOYBUTTONDOWN 
            and event.button in [self.auto_drive_button.id,self.brake_button.id]):
+                self.target_speed = 0
+                self.forward_motion = 0
+                self.turning_motion = 0
                 self.is_auto_drive = False
         elif event.type == pygame.JOYBUTTONDOWN and event.button == self.auto_drive_button.id:
                 self.is_auto_drive = True
-                self.target_heading = self.mag_sensor.get_angle()
 
     def _auto_drive_handler(self):
         """Handles the auto drive"""
-        current_heading = self.mag_sensor.get_angle()         # calculate how much off course we are 
-        delta = get_heading_difference(current_heading,self.target_heading)         
-        turning_motion = 0 
-        if delta > 1:   # if we are off course, we adjust turning motion
-            # Turning motion is a range from -100 to 100, max we ever turn is 15 
-            turning_motion = clamp_speed(self.target_heading - current_heading,-15,15)
-        self.forward_motion,self.turning_motion = self.target_speed,turning_motion
+        if(not self.is_auto_drive):
+            return
+        rgb = self.rgb_sensor.get_rgb()
+        curr_tape_color = get_tape_color(rgb)
+        # If its other, lets just keep the same heading
+        if(curr_tape_color == TapeColor.OTHER):
+            self.forward_motion = self.target_speed
+            self.turning_motion = 0
+        # If its black, stay on course
+        elif(curr_tape_color == TapeColor.BLACK):
+            self.forward_motion = self.target_speed
+            self.turning_motion = 0
+        # If its red, turn right
+        elif(curr_tape_color == TapeColor.RED):
+            self.forward_motion = self.target_speed
+            self.turning_motion = 100
+        # If its blue, turn left
+        elif(curr_tape_color == TapeColor.BLUE):
+            self.forward_motion = self.target_speed
+            self.turning_motion = -100
+
 
     def _get_turn_level_to_string(self):
         """Returns the turning level as a string"""
@@ -158,7 +173,7 @@ class PS4Listener:
         status_str += f"Current Heading: {angle}\n"
         status_str += f"Direction: {nesw_string}\n"
         status_str += f"Range Sensor: {self.range_sensor.get_cm_distance()}\n"         # The range sensor
-        status_str += f"Controller Values: {self.forward_motion},{self.turning_motion}\n"         # Add the controller values
+        status_str += f"Controller Values: {self.forward_motion},{self.turning_motion}\n\n"         # Add the controller values
         status_str += str(self.car_runner)
         return status_str
 

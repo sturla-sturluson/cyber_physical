@@ -9,3 +9,10 @@ class ButtonType(Enum):
     AXIS = auto()
     BUTTON = auto()
     HAT = auto()
+
+class TapeColor(Enum):
+    RED = auto()
+    BLACK = auto()
+    BLUE = auto()
+    TABLE = auto()
+    OTHER = auto()

@@ -16,16 +16,18 @@ class CarRunner():
     STOP_RANGE:int = 40 # in cm
     STOP_FORWARD:bool = False
 
-    SAMPLES_PER_SECOND:int = 10
+    SAMPLES_PER_SECOND:int = 50
     tsample:float = 1/SAMPLES_PER_SECOND
     # If we detected a "crash" we make sure that we keep the car stopped for a while
 
     last_stop_range_check = dt.datetime.now()
-    stop_timer = dt.timedelta(milliseconds=500)
+    stop_timer = dt.timedelta(milliseconds=1500)
+
+    PID_SELF_CORRECT:bool 
 
 
-    def __init__(self,stop_range:int|None = None):
-        self.motors = Motors()
+    def __init__(self,    PID_SELF_CORRECT:bool,stop_range:int|None = None ):
+        self.motors = Motors(PID_SELF_CORRECT)
         self.FORWARD_MOTION = 0
         self.TURNING_MOTION = 0
         if stop_range is not None:
@@ -53,11 +55,11 @@ class CarRunner():
         self.FORWARD_MOTION,self.TURNING_MOTION = 0,0
         self._update_speeds()
 
-    def set_speed(self,forward_motion:int,turning_motion:int) -> int:
+    def set_speed(self,forward_motion:int,turning_motion:int):
         """Sets the speeds of the car, returns the max RPM currently"""
         self.FORWARD_MOTION,self.TURNING_MOTION = forward_motion,turning_motion
         self._update_speeds()
-        return self.motors.MAX_RPM
+
 
     def cleanup(self):
         """Cleans up the motors"""
@@ -77,6 +79,8 @@ class CarRunner():
         
     def _range_stopper(self):
         """Returns boolean if we are within crash range"""
+        if(self.STOP_RANGE == -1):
+            return
         crashing = self.range_sensor.get_cm_distance() < self.STOP_RANGE
         if(crashing):
             self.last_stop_range_check = dt.datetime.now()

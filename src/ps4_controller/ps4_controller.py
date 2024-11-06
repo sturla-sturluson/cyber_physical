@@ -3,14 +3,7 @@ import pygame
 from ..enums import ButtonType
 
 class PS4ControllerInput:
-    ACCELERATE_BTN:PS4Button
-    REVERSE_BTN:PS4Button
-    STEER_BTN:PS4Button
-    BRAKE_BTN:PS4Button
     DEAD_ZONE:float
-
-    AXIS_IDS:list[int]
-    BUTTON_IDS:list[int]
 
     PS_TYPES_BUTTONS = [pygame.JOYBUTTONDOWN,pygame.JOYBUTTONUP]
     PS_TYPES_HATS = [pygame.JOYHATMOTION]
@@ -22,30 +15,30 @@ class PS4ControllerInput:
         self.joy_stick = joy_stick
         self.DEAD_ZONE = dead_zone
 
-    def get_values_from_game(self,joy_stick:pygame.joystick.JoystickType)->tuple[int,int]:
+    def get_values_from_game(self,accelerate:PS4Button,brake:PS4Button,reverse:PS4Button,steer:PS4Button)->tuple[int,int]:
         """Returns the values for the car based on the game state"""
         # Fetching the values from all the buttons and axis
-        self.BRAKE_BTN.set_value(joy_stick.get_button(self.BRAKE_BTN.id),self.DEAD_ZONE)
-        self.ACCELERATE_BTN.set_value(joy_stick.get_axis(self.ACCELERATE_BTN.id),self.DEAD_ZONE)
-        self.REVERSE_BTN.set_value(joy_stick.get_axis(self.REVERSE_BTN.id),self.DEAD_ZONE)
-        self.STEER_BTN.set_value(joy_stick.get_axis(self.STEER_BTN.id),self.DEAD_ZONE)
+        brake.set_value(self.joy_stick.get_button(brake.id),self.DEAD_ZONE)
+        accelerate.set_value(self.joy_stick.get_axis(accelerate.id),self.DEAD_ZONE)
+        reverse.set_value(self.joy_stick.get_axis(reverse.id),self.DEAD_ZONE)
+        steer.set_value(self.joy_stick.get_axis(steer.id),self.DEAD_ZONE)
 
         # If we are braking, we return 0,0
-        if self.BRAKE_BTN.is_pressed:
+        if brake.is_pressed:
             return 0,0
         # If we are accelerating and reversing at the same time, we return 0,0
-        if self.ACCELERATE_BTN.is_pressed and self.REVERSE_BTN.is_pressed:
+        if accelerate.is_pressed and reverse.is_pressed:
             return 0,0
         # If we are accelerating, we return the acceleration value
         # However, since that value is from -1 to 1, we need to +1 and divide by 2 and multiply by 100
         # to get a value from 0 to 100
         forward_motion = 0
-        if self.ACCELERATE_BTN.is_pressed:
-            forward_motion = self.ACCELERATE_BTN.get_normalized_value()
-        elif self.REVERSE_BTN.is_pressed:
-            forward_motion = -self.REVERSE_BTN.get_normalized_value()
+        if accelerate.is_pressed:
+            forward_motion = accelerate.get_normalized_value()
+        elif reverse.is_pressed:
+            forward_motion = -reverse.get_normalized_value()
         # If we are steering, we return the steering value
-        turning_motion = self.STEER_BTN.get_normalized_value(-100,100)
+        turning_motion = steer.get_normalized_value(-100,100)
         return forward_motion,turning_motion
     
     def set_value(self,button:PS4Button)->None:
