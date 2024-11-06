@@ -1,6 +1,6 @@
 from src.motor import CarRunner, Motors
 from src.sensors import RgbSensor
-from src.utils import get_tape_color,get_closest_color,get_current_time_string
+from src.utils import get_tape_color,get_closest_color,get_current_time_string,get_closest_tape_color
 from src.enums import TapeColor,TurningLevel
 from src import OledDisplay
 from src.constants import AIN1_PIN,AIN2_PIN,BIN1_PIN,BIN2_PIN
@@ -52,6 +52,8 @@ def main():
             
             motors.set_turning_level(TurningLevel.MEDIUM)
 
+            motors.set_max_power(40)
+
 
 
             ahead_speed = MAX_SPEED/2
@@ -72,7 +74,7 @@ def main():
                 time.sleep(TIME_INTERVAL)
                 rgb = rgb_sensor.get_rgb()
                 _curr_tape_color = get_tape_color(rgb)
-                _curr_tape_color = get_closest_color(rgb)
+                _curr_tape_color = get_closest_tape_color(rgb)
                 old_curr_tape_color = curr_tape_color
                 curr_tape_color = _curr_tape_color
 
@@ -94,14 +96,14 @@ def main():
                 # If its red, turn right
                 elif(curr_tape_color == TapeColor.RED):
                     if(old_curr_tape_color == TapeColor.RED):
-                        turning = min(100,turning+1)
+                        turning = min(100.0,turning/SPEED_STEP)
                     else:
                         turning = base_turn
-                    ahead_speed /= SPEED_STEP
+                    # ahead_speed /= SPEED_STEP
                 # If its blue, turn left
                 elif(curr_tape_color == TapeColor.BLUE):
                     if(old_curr_tape_color == TapeColor.RED):
-                        turning = min(100,turning-1)
+                        turning = -min(100.0,turning/SPEED_STEP)
                     else:
                         turning = -base_turn
                     # ahead_speed /= SPEED_STEP
@@ -110,7 +112,7 @@ def main():
 
 
                 ahead_speed = max(min(ahead_speed,MAX_SPEED),SAFE_SPEED)
-                motors.set_speed(int(ahead_speed),turning)
+                motors.set_speed(int(ahead_speed),int(turning))
                 if(time.time() - last_print > print_timer):
                     last_print = time.time()
                     # os.system('clear')

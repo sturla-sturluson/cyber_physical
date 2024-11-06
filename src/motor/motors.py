@@ -38,6 +38,11 @@ class Motors:
         """Sets the max RPM of the motors"""
         self.MAX_RPM = max_rpm
 
+    def set_max_power(self,max_power:int):
+        """Sets the max power of the motors"""
+        self.left_motor.set_max_power(max_power)
+        self.right_motor.set_max_power(max_power)
+
     @property
     def _speed_functions(self) -> tuple[Callable[[int],None],Callable[[int],None]]:
         """Returns the speed function based on the max RPM"""

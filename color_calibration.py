@@ -12,22 +12,23 @@ import argparse
 import time
 import csv
 
-def _calibrate_loop(current_color:TapeColor,color_list:list,rgbsensor:RgbSensor,number_of_samples:int,time_interval:float):
-    print("Hit enter to calibrate " + current_color.name)
+def _calibrate_loop(current_color:TapeColor,color_list:list,rgbsensor:RgbSensor,number_of_samples:int):
+    input("Hit enter to calibrate " + current_color.name)
     old_color = (-1,-1,-1)
     while True:
         new_color = rgbsensor.get_rgb()
         if(new_color != old_color):
             color_list.append(new_color)
             old_color = new_color
-        time.sleep(time_interval)
+            print(f"{len(color_list)}/{number_of_samples}")
+        time.sleep(0.10)
         if(len(color_list) == number_of_samples):
             break
         
 def _save_to_csv(color_list:list,color:TapeColor):
     filename = f"{color.name}.csv"
 
-    with open(filename, mode='w') as file:
+    with open("data/color_cal/" + filename, mode='w') as file:
         writer = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         for c in color_list:
             writer.writerow(c)
@@ -42,19 +43,14 @@ def main():
     rgbsensor = RgbSensor()
     # Take samples for 5 seconds or 100 samples
     number_of_samples = 100
-    time_interval = 5/number_of_samples
 
-    _calibrate_loop(TapeColor.BLACK,black_list,rgbsensor,number_of_samples,time_interval)
-    _calibrate_loop(TapeColor.BLUE,blue_list,rgbsensor,number_of_samples,time_interval)
-    _calibrate_loop(TapeColor.RED,red_list,rgbsensor,number_of_samples,time_interval)
-    _calibrate_loop(TapeColor.TABLE,table_list,rgbsensor,number_of_samples,time_interval)
-    _calibrate_loop(TapeColor.OTHER,other_list,rgbsensor,number_of_samples,time_interval)
+    _calibrate_loop(TapeColor.BLACK,black_list,rgbsensor,number_of_samples)
+    _calibrate_loop(TapeColor.BLUE,blue_list,rgbsensor,number_of_samples)
+    _calibrate_loop(TapeColor.RED,red_list,rgbsensor,number_of_samples)
 
     _save_to_csv(black_list,TapeColor.BLACK)
     _save_to_csv(blue_list,TapeColor.BLUE)
     _save_to_csv(red_list,TapeColor.RED)
-    _save_to_csv(table_list,TapeColor.TABLE)
-    _save_to_csv(other_list,TapeColor.OTHER)
 
 
 if __name__ == '__main__':

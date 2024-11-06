@@ -21,7 +21,7 @@ class CarRunner():
     # If we detected a "crash" we make sure that we keep the car stopped for a while
 
     last_stop_range_check = dt.datetime.now()
-    stop_timer = dt.timedelta(milliseconds=1500)
+    stop_timer = dt.timedelta(milliseconds=2500)
 
     PID_SELF_CORRECT:bool 
 
@@ -86,10 +86,11 @@ class CarRunner():
             self.last_stop_range_check = dt.datetime.now()
             self.STOP_FORWARD = True
             return
-        # If we are not crashing, we check if we should stop
         time_diff = dt.datetime.now() - self.last_stop_range_check
         if(time_diff < self.stop_timer):
             self.STOP_FORWARD = False
+        # If we are not crashing, we check if we should stop
+
 
     def _update_speeds(self):
         """Updates the speeds of the car"""

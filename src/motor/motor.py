@@ -105,6 +105,9 @@ class Motor:
             # Setting the power output
             self._set_power(int(controller_output))
 
+    def set_max_power(self,max_power:int):
+        """Sets the max power of the motor"""
+        self.MAX_POWERLEVEL = max_power
 
     def motor_stop(self):
         """Stops the motor"""

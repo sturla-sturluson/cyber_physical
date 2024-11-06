@@ -3,40 +3,38 @@ import math
 from ..enums import TapeColor
 
 
-# Avg RGB values for each color
-# {'Black': R    18.76 G    15.35 B    15.35
-
-# 'Blue': R    11.50   G    22.25 B    19.03
-
-# 'Red': R    60.12 G    14.51 B    12.30
-
-# 'Other': R    52.12 G    14.05 B     2.46
-
-# 'Table': R    69.54 G    11.25 B     2.50
-# Median RGB values for each color
-# {'Black': R    16.0 G    16.0 B    16.0
-# 'Blue': R     8.0 G    24.0 B    19.0
-
-# 'Red': R    32.5 G    12.0 B    12.0
-
-# 'Other': R    52.0 G    14.0 B     2.0
-
-# 'Table': R    55.0 G    13.0 B     3.0
+# {'Black': R    26.42
+# G    20.01
+# B     4.58
+# dtype: float64, 'Blue': R     7.62
+# G    26.50
+# B    21.35
+# dtype: float64, 'Red': R    118.10
+# G      4.34
+# B      2.00
+# dtype: float64}
 
 AVG_RGB = {
-    TapeColor.BLACK: (18.76, 15.35, 15.35),
-    TapeColor.BLUE: (11.50, 22.25, 19.03),
-    TapeColor.RED: (60.12, 14.51, 12.30),
-    TapeColor.OTHER: (52.12, 14.05, 2.46),
-    TapeColor.TABLE: (69.54, 11.25, 2.50)
+    TapeColor.BLACK: (26.42,20.01,4.58),
+    TapeColor.BLUE: (7.62,26.50,21.35),
+    TapeColor.RED: (118.10,4.34,2.00)
 }
 
+# {'Black': R    25.0
+# G    21.0
+# B     4.0
+# dtype: float64, 'Blue': R     8.0
+# G    26.0
+# B    21.0
+# dtype: float64, 'Red': R    117.0
+# G      4.0
+# B      2.0
+# dtype: float64}
 MEDIAN_RGB = {
-    TapeColor.BLACK: (16.0, 16.0, 16.0),
-    TapeColor.BLUE: (8.0, 24.0, 19.0),
-    TapeColor.RED: (32.5, 12.0, 12.0),
-    TapeColor.OTHER: (52.0, 14.0, 2.0),
-    TapeColor.TABLE: (55.0, 13.0, 3.0)
+    TapeColor.BLACK: (25,21,4),
+    TapeColor.BLUE: (8,26,21),
+    TapeColor.RED: (117,4,2)
+
 }
 
 AVG_RGB_LIST = [AVG_RGB[x] for x in AVG_RGB]
