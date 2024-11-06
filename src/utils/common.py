@@ -55,24 +55,7 @@ def get_scaled_number(value:int|float,min:int|float,max:int|float,new_min:int,ne
     normalized_value = (value - min) / curr_range_value
     return int(new_min + (normalized_value * normalize_range_value))
 
-def get_tape_color(rgb:tuple[int,int,int])->TapeColor:
-    """Since the colors are not perfect, we need to check the ranges"""
-    r,g,b =  rgb
-    if(r>100):
-        return TapeColor.RED
-    if(r>70 and (g+b)<30):
-        return TapeColor.RED
-    
-    
-    if (r>30 and g > 30 and b<30):
-        return TapeColor.BLACK
-    if (r== 45 and g == 45):
-        return TapeColor.BLACK
-    if (r<30 and g < 30 and b<30):
-        return TapeColor.BLUE
-    if (r<40 and g < 40 and b<40 and (r+g+b)<100):
-        return TapeColor.BLUE
-    return TapeColor.OTHER
+
 
 
 def heading_test():

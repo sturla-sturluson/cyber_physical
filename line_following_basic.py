@@ -32,33 +32,6 @@ from queue import Queue
 #         display.display_text(oled_display_str(motors,rgb_sensor))
 #         time.sleep(0.5)
 
-def get_most_common_tape_color(color_map:dict)->TapeColor:
-    curr_max = 0
-    max_tape_color = TapeColor.OTHER
-    blue_color = color_map[TapeColor.BLUE]
-    red_color = color_map[TapeColor.RED]
-    black_color = color_map[TapeColor.BLACK]
-    other_color = color_map[TapeColor.OTHER]
-    table_color = color_map[TapeColor.TABLE]
-    if(blue_color > curr_max):
-        curr_max = blue_color
-        max_color = TapeColor.BLUE
-    if(red_color > curr_max):
-        curr_max = red_color
-        max_color = TapeColor.RED
-    if(black_color > curr_max):
-        curr_max = black_color
-        max_color = TapeColor.BLACK
-    if(table_color > curr_max):
-        curr_max = table_color
-        max_color = TapeColor.TABLE
-    if(other_color > curr_max):
-        curr_max = other_color
-        max_color = TapeColor.OTHER
-
-    return max_color
-
-
 def main():
     display = OledDisplay()
     rgb_sensor = RgbSensor()  
@@ -99,7 +72,7 @@ def main():
                 time.sleep(TIME_INTERVAL)
                 rgb = rgb_sensor.get_rgb()
                 _curr_tape_color = get_tape_color(rgb)
-                # _curr_tape_color = get_closest_color(rgb)
+                _curr_tape_color = get_closest_color(rgb)
                 old_curr_tape_color = curr_tape_color
                 curr_tape_color = _curr_tape_color
 

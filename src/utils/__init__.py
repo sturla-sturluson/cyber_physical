@@ -13,7 +13,7 @@ from .str_formatter import (
     get_current_date_time_string,
     get_color_string,
 )
-from .rgb_to_name import get_closest_color
+from .rgb_to_name import get_closest_color, get_tape_color,get_closest_tape_color
 from .math_utils import get_angle,get_dot_product,get_midpoints,degrees_to_coordinates,calculate_orientation,get_robust_avg,generate_coefficients_equation,volt_to_cm_poly
 from .mag_sensor_utils import get_translation_function, get_NSEW_string
 from .gpio_pin import get_gpio_pin_number
@@ -26,6 +26,6 @@ from .common import (
     get_heading_difference,
     get_scaled_number,
     get_duty_cycle_values_from_speed,
-    get_tape_color
+
     
 )

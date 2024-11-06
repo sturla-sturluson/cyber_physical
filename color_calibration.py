@@ -14,11 +14,16 @@ import csv
 
 def _calibrate_loop(current_color:TapeColor,color_list:list,rgbsensor:RgbSensor,number_of_samples:int,time_interval:float):
     print("Hit enter to calibrate " + current_color.name)
+    old_color = (-1,-1,-1)
     while True:
-        color_list.append(rgbsensor.get_rgb())
+        new_color = rgbsensor.get_rgb()
+        if(new_color != old_color):
+            color_list.append(new_color)
+            old_color = new_color
         time.sleep(time_interval)
         if(len(color_list) == number_of_samples):
             break
+        
 def _save_to_csv(color_list:list,color:TapeColor):
     filename = f"{color.name}.csv"
 
